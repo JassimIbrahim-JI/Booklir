@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://<YOUR-LOGO-URL>" alt="Booklir Logo" width="200" />
+  <img src="https://postimg.cc/LJ9wsBrm" alt="Booklir Logo" width="200" />
 </p>
 
 # Booklir
