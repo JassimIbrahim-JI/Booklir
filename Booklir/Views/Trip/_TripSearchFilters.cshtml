@@ -1,0 +1,135 @@
+﻿@model Booklir.ViewModels.Trip.TripSearchViewModel
+
+<style>
+    /* Fade-in animation like Featured */
+    .fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+
+    /* Filter card styling */
+    .filter-card {
+        background: #fff;
+        border-radius: 0.75rem;
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+    }
+
+     .filter-card .form-control,
+    .filter-card .form-select {
+        min-width: 100% !important; 
+    }
+
+    .filter-card .form-label {
+        font-weight: 500;
+    }
+
+    .filter-card .btn-primary {
+        background-color: #800020;
+        border-color: #800020;
+        border-radius: 0.5rem;
+        transition: background-color 0.3s ease;
+    }
+
+    .filter-card .btn-primary:hover {
+        background-color: #990022;
+    }
+</style>
+
+<div class="filter-card fade-in">
+    <h5 class="mb-4">Filter Trips</h5>
+
+    <form id="tripSearchForm" method="get" asp-controller="Trip" asp-action="Search">
+        <!-- Keywords -->
+        <div class="mb-3">
+            <label for="Query" class="form-label">Keywords</label>
+            <input type="text"
+                   id="Query"
+                   name="Filters.Query"
+                   value="@Model.Filters.Query"
+                   class="form-control"
+                   placeholder="Search…" />
+        </div>
+
+        <!-- Price Range -->
+        <div class="mb-3 row">
+            <div class="col">
+                <label for="MinPrice" class="form-label">Min Price (QR)</label>
+                <input type="number"
+                       id="MinPrice"
+                       name="Filters.MinPrice"
+                       value="@Model.Filters.MinPrice"
+                       class="form-control"
+                       placeholder="Min" />
+            </div>
+            <div class="col">
+                <label for="MaxPrice" class="form-label">Max Price (QR)</label>
+                <input type="number"
+                       id="MaxPrice"
+                       name="Filters.MaxPrice"
+                       value="@Model.Filters.MaxPrice"
+                       class="form-control"
+                       placeholder="Max" />
+            </div>
+        </div>
+
+        <!-- Date Range -->
+        <div class="mb-3 row">
+            <div class="col">
+                <label for="StartDate" class="form-label">Start Date</label>
+                <input type="date"
+                       id="StartDate"
+                       name="Filters.StartDate"
+                       value="@(Model.Filters.StartDate?.ToString("yyyy-MM-dd"))"
+                       class="form-control" />
+            </div>
+            <div class="col">
+                <label for="EndDate" class="form-label">End Date</label>
+                <input type="date"
+                       id="EndDate"
+                       name="Filters.EndDate"
+                       value="@(Model.Filters.EndDate?.ToString("yyyy-MM-dd"))"
+                       class="form-control" />
+            </div>
+        </div>
+
+        <!-- Destination -->
+        <div class="mb-3">
+            <label for="DestinationId" class="form-label">Destination</label>
+            <select id="DestinationId"
+                    name="Filters.DestinationId"
+                    class="form-select">
+                <option value="">All Destinations</option>
+                @foreach (var dest in Model.Destinations)
+                {
+                    <option value="@dest.Id" selected="@(Model.Filters.DestinationId == dest.Id)">
+                        @dest.Name
+                    </option>
+                }
+            </select>
+        </div>
+
+        <!-- Duration -->
+        <div class="mb-4">
+            <label for="Duration" class="form-label">Trip Duration</label>
+            <select id="Duration"
+                    name="Filters.Duration"
+                    class="form-select">
+                <option value="">Any Duration</option>
+                <option value="1-3" selected="@(Model.Filters.Duration == "1-3")">1-3 Days</option>
+                <option value="4-7" selected="@(Model.Filters.Duration == "4-7")">4-7 Days</option>
+                <option value="8+"  selected="@(Model.Filters.Duration == "8+")">8+ Days</option>
+            </select>
+        </div>
+
+        <!-- Hidden for paging -->
+        <input type="hidden" name="Filters.Page" value="@Model.Filters.Page" />
+        <input type="hidden" name="Filters.PageSize" value="@Model.Filters.PageSize" />
+
+        <button type="submit" class="btn btn-primary w-100">
+            Apply Filters
+        </button>
+    </form>
+</div>

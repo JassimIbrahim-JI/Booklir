@@ -1,0 +1,257 @@
+﻿@using Booklir.enums
+@model Booklir.ViewModels.User.ManageAccountViewModel
+
+@{
+    ViewData["Title"] = "My Profile & Bookings";
+    var p = Model.Bookings.Parameters;
+    var totalPages = (int)Math.Ceiling(Model.Bookings.TotalCount / (double)p.PageSize);
+}
+
+<!-- ---------- Styles ---------- -->
+<style>
+    /* ---------- Profile Card ---------- */
+    .profile-card {
+        background-color: #66001A;
+        color: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.2);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .profile-card::before {
+            content: "";
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .profile-card h5 {
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+    /* ---------- Avatar Preview ---------- */
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 4px solid #fff;
+        box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.3);
+        transition: transform 0.3s ease;
+        object-fit: cover;
+    }
+
+        .profile-avatar:hover {
+            transform: scale(1.05);
+        }
+
+    /* ---------- Form Inputs ---------- */
+    .profile-form .form-control.custom-input,
+    .profile-form .form-select.custom-select {
+        background: rgba(255,255,255,0.1);
+        border-radius: 0.5rem;
+        color: #fff;
+        border: none;
+        margin-bottom: 1rem;
+    }
+
+        .profile-form .form-control.custom-input::placeholder,
+        .profile-form .form-select.custom-select option{
+            color: #000
+        }
+
+        .profile-form .form-control.custom-input:focus,
+        .profile-form .form-select.custom-select:focus {
+            background: rgba(255,255,255,0.2);
+            box-shadow: none;
+            outline: none;
+        }
+
+    /* Floating label tweak for select */
+    .profile-form .form-floating > label {
+        color: rgba(255,255,255,0.75);
+    }
+
+    /* ---------- Theme Select Icon ---------- */
+    .profile-form .form-select.custom-select {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg fill='%23fff'%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658c-.566-.635.213-1.658.988-1.658h8.122c.775 0 1.554 1.023.988 1.658l-4.796 5.482a1 1 0 0 1-1.576 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 1em;
+    }
+
+    /* Table padding */
+    .table td, .table th {
+        padding: 0.75rem 1rem;
+    }
+</style>
+
+<div class="container py-5">
+    <h4 class="section-title mb-4">My Profile & Bookings</h4>
+    <div class="row">
+
+        <!-- Profile Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="profile-card">
+                <h5>Edit Profile</h5>
+                <form asp-action="Manage" method="post" enctype="multipart/form-data" class="profile-form">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <input type="hidden" name="Bookings.Parameters.Page" value="@p.Page" />
+                    <input type="hidden" name="Bookings.Parameters.PageSize" value="@p.PageSize" />
+                    <input type="hidden" asp-for="Profile.ProfileImageUrl" />
+
+                    <!-- Avatar Preview -->
+                    <div class="text-center mb-4">
+                        <img id="profileImagePreview"
+                             src="@(Model.Profile.ProfileImageUrl ?? Url.Content("~/images/default-avatar.png"))"
+                             alt="Avatar"
+                             class="profile-avatar" />
+                    </div>
+                    <input asp-for="Profile.ProfileImage"
+                           class="form-control custom-input"
+                           type="file"
+                           accept=".png,.jpg,.jpeg" />
+                    <span asp-validation-for="Profile.ProfileImage" class="text-warning small"></span>
+
+                    <!-- First & Last Name -->
+                    <input asp-for="Profile.FirstName"
+                           class="form-control custom-input"
+                           placeholder="First Name" />
+                    <span asp-validation-for="Profile.FirstName" class="text-warning small"></span>
+
+                    <input asp-for="Profile.LastName"
+                           class="form-control custom-input"
+                           placeholder="Last Name" />
+                    <span asp-validation-for="Profile.LastName" class="text-warning small"></span>
+
+                    <!-- Theme Selector -->
+                    <div class="form-floating mb-3">
+                        <select asp-for="Profile.ThemePreference"
+                                asp-items="Model.Profile.ThemeOptions"
+                                class="form-select custom-select">
+                            <option disabled hidden value="">Choose theme…</option>
+                        </select>
+                        <label asp-for="Profile.ThemePreference">Theme</label>
+                        <span asp-validation-for="Profile.ThemePreference" class="text-warning small"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-light w-100">
+                        <i class="bi bi-save me-2"></i>Save Profile
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bookings Table -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Bookings</h5>
+                    <small class="text-muted">Showing page @p.Page of @totalPages</small>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Trip</th>
+                                    <th>Booked On</th>
+                                    <th>Qty</th>
+                                    <th>Total (QAR)</th>
+                                    <th>Payment</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var booking in Model.Bookings.Items)
+                                {
+                                    <tr>
+                                        <td>@booking.TripTitle</td>
+                                        <td>@booking.BookingDate.ToString("MMM dd, yyyy")</td>
+                                        <td>@booking.Quantity</td>
+                                        <td>@booking.TotalPrice.ToString("N2")</td>
+                                        <td>@booking.PaymentStatus</td>
+                                        <td>
+                                            @if (booking.Status == BookingStatus.Confirmed)
+                                            {
+                                                <span class="badge bg-success">Confirmed</span>
+                                            }
+                                            else if (booking.Status == BookingStatus.Pending)
+                                            {
+                                                <span class="badge bg-warning">Pending</span>
+                                            }
+                                            else if (booking.Status == BookingStatus.Cancelled)
+                                            {
+                                                <span class="badge bg-danger">Cancelled</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@booking.Status</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (booking.Status == BookingStatus.Pending)
+                                            {
+                                                <button class="btn btn-sm btn-danger cancel-booking" data-id="@booking.Id">
+                                                    Cancel
+                                                </button>
+                                            }
+                                            <a asp-action="Invoice" asp-route-id="@booking.Id"
+                                               class="btn btn-sm btn-outline-primary ms-1">
+                                                <i class="bi bi-file-earmark-pdf"></i> 
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav aria-label="Bookings pagination">
+                        <ul class="pagination justify-content-center mt-3">
+                            <li class="page-item @(p.Page == 1 ? "disabled" : "")">
+                                <a class="page-link" asp-action="Manage" asp-route-page="@(p.Page-1)" asp-route-pageSize="@p.PageSize">Previous</a>
+                            </li>
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(i == p.Page ? "active" : "")">
+                                    <a class="page-link" asp-action="Manage" asp-route-page="@i" asp-route-pageSize="@p.PageSize">@i</a>
+                                </li>
+                            }
+                            <li class="page-item @(p.Page == totalPages ? "disabled" : "")">
+                                <a class="page-link" asp-action="Manage" asp-route-page="@(p.Page+1)" asp-route-pageSize="@p.PageSize">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Profile image live preview
+        document.getElementById('profileImageInput')?.addEventListener('change', function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+                document.getElementById('profileImagePreview').src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+    </script>
+}

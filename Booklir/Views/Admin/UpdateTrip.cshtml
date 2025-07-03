@@ -1,0 +1,441 @@
+﻿
+@model Booklir.ViewModels.UpdateTripViewModel
+@{
+    ViewData["Title"] = "Edit Trip - " + Model.Title;
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+    <style>
+    .image-card {
+        cursor: pointer;
+        transition: transform .2s, border .2s, box-shadow .2s;
+        overflow: hidden;
+        border-radius: .5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+    }
+
+        .image-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 1rem 2rem rgba(0,0,0,0.15);
+        }
+
+        .image-card.selected {
+            border: 3px solid #0d6efd;
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 200px; /* enforce same height */
+            object-fit: cover; /* crop/scale to fill */
+            display: block;
+        }
+
+    .primary-badge {
+        font-size: .75rem;
+    }
+
+    /* ---------- New-Images Preview ---------- */
+    #new-images-preview .card {
+        border: none;
+        border-radius: .5rem;
+        overflow: hidden;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+    }
+
+    #new-images-preview .card-img-top {
+        height: 150px; /* uniform thumbnail height */
+        object-fit: cover;
+    }
+
+    /* ---------- Global Buttons & Cards ---------- */
+    .btn-primary {
+        border-radius: .5rem;
+        transition: background-color .3s, box-shadow .3s;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+        }
+
+    .card.shadow {
+        border: none;
+        border-radius: .75rem;
+    }
+
+    .card-header {
+        border-radius: .75rem .75rem 0 0;
+    }
+
+
+    .itinerary-card {
+        border-radius: 0.75rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05);
+        overflow: hidden;
+        transition: transform .2s, box-shadow .2s;
+    }
+
+        .itinerary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 1rem 2rem rgba(0,0,0,0.1);
+        }
+
+        .itinerary-card .card-body {
+            padding: 1rem;
+        }
+
+    .remove-itinerary {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        border: none;
+        background: transparent;
+        font-size: 1.1rem;
+        color: #dc3545;
+        cursor: pointer;
+    }
+
+    #add-itinerary {
+        border-radius: 0.5rem;
+    }
+
+    .trip-details-card {
+        border: none;
+        border-radius: 1rem;
+        background-color: #f9f9fb;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        padding: 1.5rem;
+    }
+
+        .trip-details-card .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .trip-details-card .form-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .trip-details-card .form-control,
+        .trip-details-card .form-select {
+            border-radius: 0.5rem;
+            box-shadow: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+            .trip-details-card .form-control:focus,
+            .trip-details-card .form-select:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+            }
+
+        .trip-details-card .form-check-label {
+            font-weight: 500;
+        }
+
+    .trip-details-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #0d6efd;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+    }
+
+    </style>
+
+
+<div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Edit Trip: @Model.Title</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="UpdateTrip" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+            <!-- Primary Image Selector -->
+            <div class="mb-5">
+                <label class="fw-bold">Primary Image</label>
+                <div class="row g-3" id="primary-image-selector">
+                    @foreach (var img in Model.ExistingImages)
+                    {
+                        <div class="col-md-4">
+                            <div class="card image-card h-100 position-relative" data-image-id="@img.Id">
+                                <img src="@img.ImageUrl" alt="Trip image" />
+                                <div class="card-body text-center">
+                                    <input type="radio" name="PrimaryImageId" value="@img.Id" id="primary-@img.Id"
+                                           class="d-none" @(Model.PrimaryImageId == img.Id ? "checked" : "") />
+                                    <label for="primary-@img.Id" class="stretched-link mb-0">
+                                        Set as Primary
+                                    </label>
+                                </div>
+                                <span class="badge bg-success primary-badge position-absolute top-0 end-0 m-2"
+                                      style="display:@(img.IsPrimary ? "inline-block" : "none")">
+                                    Primary
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- New Image Upload with Live Preview -->
+            <div class="mb-5">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Add / Replace Images</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Upload Images (Max 3 total)</label>
+                            <input asp-for="NewImages" type="file" multiple accept="image/*"
+                                   class="form-control" id="new-images-input" />
+                            <small class="form-text text-light">JPG, PNG or GIF, Max 2MB each</small>
+                        </div>
+                        <div class="row g-2" id="new-images-preview"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trip Details Form -->
+            <div class="row g-2">
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="trip-details-card">
+                        <div class="trip-details-title">
+                            <i class="bi bi-geo-alt-fill me-2"></i>Trip Details
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Price" class="form-label">Price (QAR)</label>
+                            <input asp-for="Price" class="form-control" placeholder="e.g., 1500" />
+                            <span asp-validation-for="Price" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="StartDate" class="form-label">Start Date</label>
+                            <input asp-for="StartDate" type="date" class="form-control" />
+                            <span asp-validation-for="StartDate" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="EndDate" class="form-label">End Date</label>
+                            <input asp-for="EndDate" type="date" class="form-control" />
+                            <span asp-validation-for="EndDate" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="AvailableSeats" class="form-label">Available Seats</label>
+                            <input asp-for="AvailableSeats" class="form-control" placeholder="e.g., 20" />
+                            <span asp-validation-for="AvailableSeats" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Status" class="form-label">Status</label>
+                            <select asp-for="Status" class="form-select">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="DestinationId" class="form-label">Destination</label>
+                            <select asp-for="DestinationId" asp-items="Model.DestinationOptions" class="form-select">
+                                <option value="">-- Select Destination --</option>
+                            </select>
+                            <span asp-validation-for="DestinationId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="TripCategoryId" class="form-label">Category</label>
+                            <select asp-for="TripCategoryId" asp-items="Model.CategoryOptions" class="form-select">
+                                <option value="">-- Select Category --</option>
+                            </select>
+                            <span asp-validation-for="TripCategoryId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-check mt-3">
+                            <input asp-for="IsFeatured" class="form-check-input" />
+                            <label asp-for="IsFeatured" class="form-check-label">
+                                <i class="bi bi-star-fill text-warning me-1"></i> Featured Trip
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Itinerary Editor -->
+            <div class="card border-secondary mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Trip Itinerary</h5>
+                </div>
+                <div class="card-body">
+                    <div id="itinerary-container" class="row g-3">
+                        @for (var i = 0; i < Model.Itinerary.Count; i++)
+                        {
+                            <div class="col-md-6">
+                                <div class="position-relative itinerary-card">
+                                    <button type="button"
+                                            class="remove-itinerary"
+                                    @(i == 0 ? "style='display:none;'" : "")>
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    </button>
+                                    <div class="card-body">
+                                        <input type="hidden" asp-for="Itinerary[@i].Id" />
+
+                                        <div class="row gx-2 gy-3">
+                                            <div class="col-2">
+                                                <input asp-for="Itinerary[@i].DayNumber"
+                                                       class="form-control"
+                                                       placeholder="Day" />
+                                                <span asp-validation-for="Itinerary[@i].DayNumber"
+                                                      class="text-danger small"></span>
+                                            </div>
+                                            <div class="col-5">
+                                                <input asp-for="Itinerary[@i].Title"
+                                                       class="form-control"
+                                                       placeholder="Title" />
+                                                <span asp-validation-for="Itinerary[@i].Title"
+                                                      class="text-danger small"></span>
+                                            </div>
+                                            <div class="col-5">
+                                                <input asp-for="Itinerary[@i].Description"
+                                                       class="form-control"
+                                                       placeholder="Description" />
+                                                <span asp-validation-for="Itinerary[@i].Description"
+                                                      class="text-danger small"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <button type="button" id="add-itinerary" class="btn btn-sm btn-outline-primary mt-3">
+                        <i class="bi bi-plus-circle me-1"></i> Add Day
+                    </button>
+                </div>
+            </div>
+
+
+
+
+            <div class="d-flex justify-content-between">
+                <a asp-action="Trips" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Update Trip
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script>
+        // Select primary image by clicking card
+        document.querySelectorAll('#primary-image-selector .image-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.image-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+
+                const id = card.getAttribute('data-image-id');
+                const radio = document.getElementById('primary-' + id);
+                if (radio) radio.checked = true;
+
+                document.querySelectorAll('.primary-badge').forEach(b => b.style.display = 'none');
+                const badge = card.querySelector('.primary-badge');
+                if (badge) badge.style.display = 'inline-block';
+            });
+        });
+
+        // Preview newly selected images
+        document.getElementById('new-images-input').addEventListener('change', function (e) {
+            const container = document.getElementById('new-images-preview');
+            container.innerHTML = '';
+            Array.from(this.files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = evt => {
+                    const col = document.createElement('div');
+                    col.className = 'col-4';
+                    col.innerHTML = `
+                        <div class="card mb-2 shadow-sm">
+                            <img src="${evt.target.result}" class="card-img-top" alt="Preview">
+                            <div class="card-body p-2 text-center">
+                                <small class="text-muted">${file.name}</small>
+                            </div>
+                        </div>`;
+                    container.appendChild(col);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let count = @Model.Itinerary.Count;
+            const container = document.getElementById('itinerary-container');
+
+            // Delegate remove clicks
+            container.addEventListener('click', e => {
+                const btn = e.target.closest('.remove-itinerary');
+                if (btn) {
+                    btn.closest('.col-md-6').remove();
+                }
+            });
+
+            // Add new itinerary card
+            document.getElementById('add-itinerary').addEventListener('click', () => {
+                const idx = count++;
+                const html = `
+              <div class="col-md-6">
+                <div class="position-relative itinerary-card">
+                  <button type="button" class="remove-itinerary">
+                    <i class="bi bi-x-circle-fill"></i>
+                  </button>
+                  <div class="card-body">
+                    <div class="row gx-2 gy-3">
+                      <div class="col-2">
+                        <input name="Itinerary[${idx}].DayNumber"
+                               class="form-control"
+                               placeholder="Day" />
+                      </div>
+                      <div class="col-5">
+                        <input name="Itinerary[${idx}].Title"
+                               class="form-control"
+                               placeholder="Title" />
+                      </div>
+                      <div class="col-5">
+                        <input name="Itinerary[${idx}].Description"
+                               class="form-control"
+                               placeholder="Description" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        });
+
+    </script>
+}

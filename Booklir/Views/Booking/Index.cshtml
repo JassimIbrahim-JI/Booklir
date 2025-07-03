@@ -1,0 +1,176 @@
+﻿@using Booklir.enums
+@model IEnumerable<Booklir.ViewModels.Booking.BookingViewModel>
+@{
+    ViewData["Title"] = "My Bookings";
+}
+
+<style>
+    .booking-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+        overflow: visible; /* allow modal to escape */
+    }
+
+        .booking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+
+    .booking-image {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+    }
+
+    .empty-state-card {
+        background: #f8f9fa;
+        border: 1px dashed #dee2e6;
+    }
+
+    .shadow-hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+</style>
+
+<div class="container py-5">
+    <h1 class="fw-bold mb-4">My Travel Plans</h1>
+
+    <div class="alert-container">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state-card text-center p-5 rounded-4 shadow-sm">
+            <i class="bi bi-calendar-x display-1 text-muted mb-4"></i>
+            <h2 class="mb-3">No Upcoming Journeys</h2>
+            <p class="text-muted mb-4">You haven't booked any adventures yet. Start exploring now!</p>
+            <a asp-action="Index" asp-controller="Trip" class="btn btn-primary btn-lg px-4">
+                Discover Trips
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var booking in Model)
+            {
+                <div class="col-lg-6">
+                    <div class="booking-card card border-0 shadow-hover h-100">
+                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                            <span class="badge @GetStatusClass(booking.Status) rounded-pill p-2">
+                                @booking.Status
+                            </span>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-action="Details"
+                                           asp-route-bookingId="@booking.Id">
+                                            <i class="bi bi-eye me-2"></i> View Details
+                                        </a>
+                                    </li>
+                                    @if (booking.Status == BookingStatus.Confirmed)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="#"
+                                               data-bs-toggle="modal" data-bs-target="#cancelModal-@booking.Id">
+                                                <i class="bi bi-x-circle me-2"></i> Cancel
+                                            </a>
+                                        </li>
+                                    }
+                                    <li>
+                                        <a class="dropdown-item" asp-action="Invoice" asp-route-id="@booking.Id">
+                                            <i class="bi bi-receipt me-2"></i> Invoice
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="d-flex">
+                                <img src="@booking.PrimaryImage" class="booking-image rounded-3 me-4" alt="@booking.TripTitle">
+                                <div>
+                                    <h5 class="card-title fw-bold">@booking.TripTitle</h5>
+                                    <div class="d-flex align-items-center text-muted mb-2">
+                                        <i class="bi bi-calendar me-2"></i>
+                                        @booking.Trip.StartDate.ToString("MMM dd") - @booking.Trip.EndDate.ToString("MMM dd, yyyy")
+                                    </div>
+                                    <div class="d-flex">
+                                        <span class="me-3">
+                                            <i class="bi bi-people me-1"></i>
+                                            @booking.Quantity traveler@(booking.Quantity > 1 ? "s" : "")
+                                        </span>
+                                        <span>
+                                            <i class="bi bi-credit-card me-1"></i>
+                                            QAR @((booking.Trip.Price * booking.Quantity).ToString("N0"))
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@* Move all modals outside the card grid so they overlay entire page *@
+@foreach (var booking in Model)
+{
+    <div class="modal fade" id="cancelModal-@booking.Id" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Cancellation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel booking for <strong>@booking.TripTitle</strong>?</p>
+                    <p class="text-danger">Cancellation fees may apply according to our policy.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Close
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-danger js-confirm-cancel"
+                            data-id="@booking.Id">
+                        Confirm Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    string GetStatusClass(BookingStatus status) => status switch
+    {
+        BookingStatus.Confirmed => "bg-success",
+        BookingStatus.Pending => "bg-warning",
+        BookingStatus.Cancelled => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

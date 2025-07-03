@@ -1,0 +1,47 @@
+﻿@model Booklir.ViewModels.Authentication.NewsletterViewModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Subscribe to our newsletter</title>
+</head>
+<body style="font-family: Arial, sans‐serif; margin:0; padding:0; background:#ffffff;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+            <td align="center" style="padding:40px 0;">
+                <!-- Logo -->
+                <img src="@Model.LogoUrl"
+                     alt="Logo"
+                     width="80"
+                     style="display:block; border:0; margin-bottom:20px;" />
+                <!-- Heading -->
+                <h1 style="font-size:24px; margin:0 0 10px; color:#222;">
+                    Subscribe to our newsletter
+                </h1>
+                <p style="font-size:16px; margin:0 0 30px; color:#555;">
+                    Stay updated with our latest trips, deals, and news.
+                </p>
+                <!-- Subscribe Button -->
+                <a href="@Model.SubscribeUrl"
+                   style="
+             background:#66001A;
+             color:#ffffff;
+             text-decoration:none;
+             padding:12px 24px;
+             border-radius:4px;
+             display:inline-block;
+             font-weight:bold;
+           ">
+                    SUBSCRIBE
+                </a>
+                <!-- Unsubscribe Link -->
+                <p style="margin-top:20px; font-size:14px;">
+                    <a href="@Model.UnsubscribeUrl" style="color:#555; text-decoration:underline;">
+                        Unsubscribe
+                    </a>
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

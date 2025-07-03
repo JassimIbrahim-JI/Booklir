@@ -1,0 +1,73 @@
+﻿@using Booklir.Core.Results
+@model IPagedResult<Destination>
+
+@{
+    ViewData["Title"] = "All Destinations";
+}
+
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold">Destinations</h2>
+            <a asp-action="Index" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+            </a>
+        </div>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="alert alert-info text-center">
+                No destinations found.
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var dest in Model.Items)
+                {
+                    <div class="col-sm-6 col-md-4 col-lg-3">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="ratio ratio-4x3 rounded-top overflow-hidden" style="background:url('@dest.ImageUrl') center/cover;">
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">@dest.Name</h5>
+                                <p class="card-text text-truncate">
+                                    @((dest.Trips?.Count ?? 0) > 0
+                                        ? $"{dest.Trips.Count} Trip(s)"
+                                        : "No trips yet")
+                                </p>
+                                <a asp-action="Details" asp-route-id="@dest.Id"
+                                   class="mt-auto btn btn-primary">
+                                    View Details <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <nav aria-label="Page navigation" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    @if (Model.Page > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-route-page="@(Model.Page - 1)">‹ Prev</a>
+                        </li>
+                    }
+                    @for (int p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")">
+                            <a class="page-link" asp-route-page="@p">@p</a>
+                        </li>
+                    }
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-route-page="@(Model.Page + 1)">Next ›</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</section>

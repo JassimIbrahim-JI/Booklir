@@ -1,0 +1,188 @@
+﻿@model Booklir.ViewModels.User.UserListViewModel
+@inject RoleManager<IdentityRole> RoleManager
+
+@{
+    ViewData["Title"] = "Users Management";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+}
+
+<div class="card shadow-sm">
+
+    <div class="card-header d-flex flex-wrap gap-3 align-items-center">
+        <h5 class="mb-0 flex-grow-1">User Management</h5>
+
+        <div class="input-group" style="max-width: 300px;">
+            <input type="text"
+                   class="form-control form-control-sm"
+                   placeholder="Search users..."
+                   id="userSearch">
+            <button class="btn btn-sm btn-outline-primary" type="button">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+
+        <button class="btn btn-sm btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#createUserModal">
+            <i class="bi bi-plus-lg me-2"></i> Add User
+        </button>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle" id="usersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Roles</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var user in Model.Items)
+                    {
+                     <tr data-user-id="@user.Id">
+                            <td>  <input type="checkbox" class="form-check-input user-checkbox" value="@user.Id"/></td>
+                         <td>
+                             <div class="d-flex align-items-center gap-2">
+                                    <img src="@user.ProfileImageUrl"
+                                         class="rounded-circle profile-image"
+                                         width="40"
+                                         height="40"
+                                         alt="@user.FirstName's profile image" />
+                               @($"{user.FirstName} {user.LastName}")
+                             </div>
+                         </td>
+                         <td>@user.Email</td>
+                           <td>
+                                <span class="badge @(user.IsActive ? "bg-success" : "bg-danger") status-badge p-2">
+                                        @(user.IsActive ? "Active" : "Inactive")
+                                </span>
+                           </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1 roles-container" style="max-width: 200px;">
+                                        @foreach (var role in user.Roles)
+                                        {
+                                        <span class="badge bg-info text-truncate" style="max-width: 120px;">@role</span>
+                                        }
+                                </div>
+                            </td>
+                            <td>
+                                @if (user.LastLoginDate.HasValue)
+                                {
+                                <span class="text-muted" data-last-login="@user.Id">
+                                    @user.LastLoginDate.Value.ToString("g")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Never</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2 flex-nowrap">
+                                    <button class="btn btn-sm btn-outline-secondary toggle-status"
+                                            data-user-id="@user.Id">
+                                        <i class="bi bi-power"></i>
+                                    </button>
+                                   
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="EditUser"
+                                       asp-route-userId="@user.Id">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    <button class="btn btn-sm btn-outline-danger delete-user"
+                                            data-user-id="@user.Id"
+                                            data-user-name="@($"{user.FirstName} {user.LastName}")">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>  
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="bulk-actions">
+                <select class="form-select form-select-sm bulk-action-select" style="width:150px;">
+                    <option>Bulk Actions</option>
+                    <option value="activate">Activate</option>
+                    <option value="deactivate">Deactivate</option>
+                    <option value="delete">delete</option>
+                </select>
+                <button class="btn btn-sm btn-primary ms-2" id="applyBulkAction">Apply</button>
+            </div>
+        </div>
+        <nav aria-label="User Pagination">
+            <ul class="pagination pagination-sm mb-0">
+                @for (int i = 1; i <= Math.Ceiling((double)Model.TotalCount / Model.Parameters.PageSize); i++)
+                {
+                    <li class="page-item @(i == Model.Parameters.PageNumber ? "active" : "")">
+                        <a class="page-link"
+                           href="@Url.Action("Users", new { pageNumber = i, pageSize = Model.Parameters.PageSize, search = Model.Parameters.Search })">
+                            @i
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+
+    </div>
+</div>
+
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New User</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-action="CreateUser">
+              <div class="modal-body">
+                  <div class="mb-3">
+                      <label class="form-label">Email</label>
+                      <input type="email" class="form-control" name="email" required/>
+                  </div>
+                  <div class="row g-3">
+                      <div class="col-md-6">
+                          <label class="form-label">First Name</label>
+                          <input type="text" class="form-control" name="firstname" required/>
+                      </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-control" name="lastname" required />
+                        </div>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">User Role</label>
+                        <select class="form-select"
+                                name="SelectedRoles"
+                                multiple
+                                data-bs-toggle="dropdown"
+                                style="min-height: 120px;">
+                            @foreach (var role in RoleManager.Roles.ToList())
+                            {
+                                <option value="@role.Name" class="py-2">@role.Name</option>
+                            }
+                        </select>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button class="btn btn-sm btn-secondary" type="button" data-bs-dismiss="modal">
+                      Cancel
+                  </button>
+                  <button class="btn btn-primary btn-sm" type="submit">Create User</button>
+              </div>
+            </form>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,58 @@
+﻿@model IEnumerable<TripCategory>
+@{
+    ViewData["Title"] = "Manage Categories";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0">Trip Categories</h3>
+        <a asp-action="CreateCategory" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> New Category
+        </a>
+    </div>
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Icon</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var cat in Model)
+                    {
+                        <tr>
+                            <td>@cat.Id</td>
+                            <td>@cat.Name</td>
+                            <td><i class="bi @cat.IconCss fs-4"></i></td>
+                            <td>
+                                @if (cat.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="EditCategory" asp-route-id="@cat.Id" class="btn btn-sm btn-outline-secondary me-2">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </a>
+                                <form asp-action="DeleteCategory" asp-route-id="@cat.Id" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this category?');">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

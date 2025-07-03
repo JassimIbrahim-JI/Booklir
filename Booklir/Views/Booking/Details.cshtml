@@ -1,0 +1,92 @@
+﻿@using Booklir.enums
+@model Booklir.ViewModels.Booking.BookingViewModel
+
+@{
+    ViewData["Title"] = "Booking Details";
+}
+
+<style>
+    .bg-primary{
+        background-color: #800020 !important;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Booking Details</h4>
+                    <span class="badge @GetStatusClass(Model.Status) rounded-pill">
+                        @Model.Status
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4 text-center">
+                            <img src="@Model.PrimaryImage"
+                                 class="img-fluid rounded mb-3"
+                                 alt="@Model.TripTitle" />
+                        </div>
+                        <div class="col-md-8">
+                            <h5 class="fw-bold">@Model.TripTitle</h5>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                @Model.Trip.StartDate.ToString("MMM dd, yyyy")
+                                &ndash;
+                                @Model.Trip.EndDate.ToString("MMM dd, yyyy")
+                            </p>
+                            <p class="mb-1">
+                                <i class="bi bi-people me-1"></i>
+                                @Model.Quantity traveler@(Model.Quantity > 1 ? "s" : "")
+                            </p>
+                            <p class="mb-3">
+                                <i class="bi bi-credit-card me-1"></i>
+                                Total Paid: QAR @((Model.Trip.Price * Model.Quantity).ToString("N0"))
+                            </p>
+
+                            <dl class="row">
+                                <dt class="col-sm-4">Booking Date</dt>
+                                <dd class="col-sm-8">@Model.BookingDate.ToString("MMM dd, yyyy hh:mm tt")</dd>
+
+                                <dt class="col-sm-4">Booked By</dt>
+                                <dd class="col-sm-8">@Model.UserName</dd>
+
+                                <dt class="col-sm-4">Booking ID</dt>
+                                <dd class="col-sm-8">@Model.Id</dd>
+                            </dl>
+
+                            <div class="mt-4 d-flex gap-2">
+                                @if (Model.Status == BookingStatus.Confirmed)
+                                {
+                                    <button type="button"
+                                            class="btn btn-outline-danger cancel-booking"
+                                            data-id="@Model.Id">
+                                        <i class="bi bi-x-circle me-1"></i> Cancel Booking
+                                    </button>
+                                }
+                                <a asp-action="Invoice" asp-route-id="@Model.Id"
+                                   class="btn btn-outline-primary">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i> Download Invoice
+                                </a>
+                                <a asp-action="Index" class="btn btn-primary">
+                                    <i class="bi bi-arrow-left me-1"></i> My Bookings
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(BookingStatus status) => status switch
+    {
+        BookingStatus.Confirmed => "bg-success text-white",
+        BookingStatus.Pending => "bg-warning text-dark",
+        BookingStatus.Cancelled => "bg-danger text-white",
+        _ => "bg-secondary text-white"
+    };
+}

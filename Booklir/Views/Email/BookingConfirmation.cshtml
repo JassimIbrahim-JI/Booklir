@@ -1,0 +1,34 @@
+﻿@model Booklir.ViewModels.Booking.BookingConfirmationViewModel
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Booking Confirmed!</title>
+</head>
+<body style="font-family:Arial,sans-serif; background:#fff; margin:0; padding:20px;">
+    <h2>Hello @Model.CustomerName,</h2>
+    <p>Thank you for your booking at <strong>@Model.CompanyName</strong>!</p>
+
+    <table cellpadding="0" cellspacing="0" width="100%" style="margin:20px 0;">
+        <tr>
+            <td>Trip:</td>
+            <td><strong>@Model.TripTitle</strong></td>
+        </tr>
+        <tr>
+            <td>Date:</td>
+            <td>@Model.BookingDate.ToString("yyyy-MM-dd")</td>
+        </tr>
+        <tr>
+            <td>Quantity:</td>
+            <td>@Model.Quantity</td>
+        </tr>
+        <tr>
+            <td>Total:</td>
+            <td>QAR @Model.TotalPrice.ToString("N2")</td>
+        </tr>
+    </table>
+
+    <p>If you have any questions, just reply to this email.</p>
+    <p>Safe trips!<br />— @Model.CompanyName Team</p>
+</body>
+</html>

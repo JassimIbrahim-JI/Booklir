@@ -1,0 +1,10 @@
+﻿@model IEnumerable<Destination>
+
+@foreach (var dest in Model)
+{
+    <li>
+        <a class="dropdown-item" asp-controller="Destination" asp-action="Details" asp-route-id="@dest.Id">
+            @dest.Name
+        </a>
+    </li>
+}

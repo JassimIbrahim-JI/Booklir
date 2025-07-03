@@ -1,0 +1,60 @@
+﻿@model Booklir.ViewModels.Authentication.LoginViewModel
+@{
+    ViewData["Title"] = "Login to Booklir";
+    Layout = "/Views/Shared/_AuthLayout.cshtml";
+}
+
+<div class="auth-card">
+    <div class="auth-header">
+        <h2>Welcome Back</h2>
+        <p>Login to your account</p>
+    </div>
+
+    <form method="post"
+          asp-action="Login"
+          class="auth-form login-form"
+          data-ajax="true"
+          data-ajax-success="onLoginSuccess"
+          data-ajax-failure="onLoginFailure">
+        @Html.AntiForgeryToken()
+
+        <div class="form-group mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input type="email" asp-for="Email" class="form-control" placeholder="Enter email" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-group mb-3 position-relative">
+            <div class="d-flex justify-content-between">
+                <label asp-for="Password" class="form-label"></label>
+                <a asp-action="ForgotPassword" class="text-muted small">Forgot Password?</a>
+            </div>
+            <input type="password" asp-for="Password" class="form-control pe-5" placeholder="************" />
+
+            <!-- Fixed toggle span: class not action, and wrap only the icon -->
+            <span class="input-group-text password-toggle border-0"
+                  style="position:absolute; top:70%; right:0.5rem; transform:translateY(-50%); cursor:pointer;">
+                <i class="bi bi-eye-slash"></i>
+            </span>
+
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="form-group form-check mb-4">
+            <input asp-for="RememberMe" type="checkbox" class="form-check-input" />
+            <label asp-for="RememberMe" class="form-check-label"></label>
+        </div>
+
+        <!-- Store original text for spinner reset -->
+        <button type="submit"
+                class="btn btn-primary w-100 mb-3"
+                data-original-text="Sign In">
+            Sign In
+        </button>
+
+        <div class="text-center">
+            <span class="text-muted">Don't have an account? </span>
+            <a asp-action="Register" class="text-decoration-none">Create account</a>
+        </div>
+    </form>
+</div>

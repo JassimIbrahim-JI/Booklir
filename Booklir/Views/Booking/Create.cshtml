@@ -1,0 +1,346 @@
+﻿@using Booklir.enums
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@model Booklir.ViewModels.Booking.CreateBookingViewModel
+
+
+@{
+    ViewData["Title"] = "Complete Your Booking";
+}
+
+<style>
+    .booking-summary-card {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: box-shadow 0.2s ease-in-out;
+    }
+
+    .booking-summary-card:hover {
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+
+    .sticky-top {
+        position: -webkit-sticky;
+        position: sticky;
+    }
+
+    .custom-select {
+        appearance: none; /* remove native arrow */
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0,0 L5,6 L10,0' fill='none' stroke='%23800020' stroke-width='2'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 10px 6px;
+        border: 2px solid var(--primary-color);
+        border-radius: var(--border-radius);
+        padding-right: 2.5rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .custom-select:focus,
+        .form-select:focus {
+            border-color: var(--primary-color) !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        /* 3) Animate option hover (modern browsers only) */
+        .custom-select option:hover {
+            background-color: rgba(128, 0, 32, 0.1);
+        }
+
+    /* 4) Radio buttons in maroon */
+    .form-check-input {
+        accent-color: #600000 !important;
+        border:none;
+    }
+
+    .form-check-input:checked {
+  background-color: maroon !important;
+  border-color: maroon !important;
+}
+
+    /* 5) Active menu/border styles on the form‐controls container */
+    .booking-form .form-control,
+    .booking-form .form-select {
+        transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+
+        .booking-form .form-control:focus,
+        .booking-form .form-select:focus {
+            transform: scale(1.02);
+            border-color: var(--primary-color-dark);
+            box-shadow: 0 0 0 0.15rem rgba(128, 0, 32, 0.2);
+        }
+
+</style>
+
+@if (Model.AlreadyBooked)
+{
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle-fill me-2"></i>
+        You’ve already booked this trip!
+    </div>
+
+    <div class="booking-summary-card bg-white p-4 rounded-3 shadow-sm">
+        <h5 class="mb-3">Your Booking Summary</h5>
+
+        <div class="d-flex justify-content-between mb-2">
+            <div><strong>Trip:</strong></div>
+            <div>@Model.Trip.Title</div>
+        </div>
+
+        <div class="d-flex justify-content-between mb-2">
+            <div><strong>Dates:</strong></div>
+            <div>@Model.Trip.StartDate.ToString("MMM dd") – @Model.Trip.EndDate.ToString("MMM dd, yyyy")</div>
+        </div>
+
+        <div class="d-flex justify-content-between mb-2">
+            <div><strong>Seats Reserved:</strong></div>
+            <div>Check your account for details</div>
+        </div>
+
+        <div class="d-flex justify-content-between border-top pt-3 mt-3">
+            <div><strong>Total Paid:</strong></div>
+            <div>Check your booking</div>
+        </div>
+
+        <div class="text-end mt-4">
+            <a href="@Url.Action("Index", "Booking")" class="btn btn-outline-primary">
+                <i class="bi bi-calendar-check me-1"></i> View My Booking
+            </a>
+        </div>
+    </div>
+}
+
+else
+{   
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex align-items-center mb-4">
+                <a asp-controller="Home"
+                   asp-action="Details"
+                   asp-route-id="@Model.TripId"
+                   class="btn btn-outline-primary btn-sm me-2">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+
+                <h1 class="m-0">Complete Your Booking</h1>
+            </div>
+
+            <!-- Display validation errors -->
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            <!-- Display TempData messages -->
+            @if (TempData["ErrorCreateBooking"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["ErrorCreateBooking"]
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="sticky-top" style="top: 20px;">
+                                <h3 class="fw-bold mb-3">@Model.Trip.Title</h3>
+
+                                <div class="d-flex mb-4">
+                                    <div class="me-4">
+                                        <div class="text-muted small">DEPARTURE</div>
+                                        <div>@Model.Trip.StartDate.ToString("MMM dd, yyyy")</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">DURATION</div>
+                                        <div>@((Model.Trip.EndDate - Model.Trip.StartDate).Days) days</div>
+                                    </div>
+                                </div>
+
+                                    <div id="bookingTripCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                                        <div class="carousel-inner rounded shadow-sm">
+                                            @for (int i = 0; i < Model.Trip.GalleryImages.Count; i++)
+                                            {
+                                                <div class="carousel-item @(i == 0 ? "active" : "")">
+                                                    <div class="ratio ratio-4x3 overflow-hidden">
+                                                        <img src="@Model.Trip.GalleryImages[i]"
+                                                             class="w-100 h-100 object-fit-cover"
+                                                             alt="Image @(i+1)" />
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                        @if (Model.Trip.GalleryImages.Count > 1)
+                                        {
+                                            <button class="carousel-control-prev" type="button"
+                                                    data-bs-target="#bookingTripCarousel"
+                                                    data-bs-slide="prev">
+                                                <span class="carousel-control-prev-icon"></span>
+                                            </button>
+                                            <button class="carousel-control-next" type="button"
+                                                    data-bs-target="#bookingTripCarousel"
+                                                    data-bs-slide="next">
+                                                <span class="carousel-control-next-icon"></span>
+                                            </button>
+                                        }
+                                    </div>
+
+                                <div class="d-flex justify-content-between border-top pt-3">
+                                    <div class="text-muted">Price per person:</div>
+                                    <div class="fw-bold text-price">@($"QAR {Model.Trip.Price:N0}")</div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <div class="bg-light p-4 rounded-3">
+                                <h4 class="mb-4">Booking Summary</h4>
+
+                                <form asp-action="Create" method="post" class="booking-form">
+                                    @Html.AntiForgeryToken()
+
+                                    <!-- Only include the essential fields needed for booking -->
+                                    <input type="hidden" asp-for="TripId" />
+                                    <input type="hidden" asp-for="MaxSeats" />
+
+                                    <div class="mb-4">
+                                        <span class="py-2 fw-bold">Number of Travelers</span>
+                                        <select class="custom-select form-select form-select-lg"
+                                                asp-for="Quantity"
+                                                asp-items="@Enumerable.Range(1, Model.MaxSeats).Select(i => new SelectListItem(i.ToString(), i.ToString()))">
+                                        </select>
+                                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                                        <div class="form-text">
+                                            @Model.MaxSeats seats available
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <span asp-for="Notes" class="py-2"></span>
+                                        <textarea asp-for="Notes"
+                                                  class="form-control @(ViewData.ModelState[nameof(Model.Notes)]?.Errors.Count > 0 ? "is-invalid" : "")"
+                                                  rows="3"
+                                                  placeholder="Any special requests or notes (optional)"></textarea>
+                                        <div class="invalid-feedback">
+                                            @Html.ValidationMessageFor(m => m.Notes)
+                                        </div>
+                                    </div>
+
+
+                                    <div class="booking-summary-card bg-white p-4 rounded-3 mb-4">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>@Model.Trip.Price.ToString("N0") x <span id="travelersCount">@Model.Quantity</span></span>
+                                          <span>QR <span id="basePrice">@((Model.Trip.Price * Model.Quantity).ToString("N0"))</span></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                                            <span class="fw-bold">Total:</span>
+                                            <span class="h5 text-price">QR <span id="totalPrice">@((Model.Trip.Price * Model.Quantity).ToString("N0"))</span></span>
+                                        </div>
+                                    </div>
+
+                                        <div class="mb-4">
+                                            <span class="py-2 fw-bold">Payment Method</span>
+                                            <div class="form-check">
+                                                <input class="form-check-input"
+                                                       type="radio"
+                                                       id="payCreditCard"
+                                                       name="PaymentMethod"
+                                                       value="Credit"
+                                                @(Model.PaymentMethod == PaymentMethod.Credit ? "checked" : "") />
+                                                <label class="form-check-label" for="payCreditCard">
+                                                    Credit Card
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input"
+                                                       type="radio"
+                                                       id="payCash"
+                                                       name="PaymentMethod"
+                                                       value="Cash"
+                                                @(Model.PaymentMethod == PaymentMethod.Cash ? "checked" : "") />
+                                                <label class="form-check-label" for="payCash">
+                                                    Cash (Pay at Office)
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Stripe Card Section -->
+                                        <div id="stripe-card-section" class="mb-3" style="display: none;">
+                                            <div class="form-group">
+                                                <label>Card Details</label>
+                                                <div id="card-element" class="form-control p-2"></div>
+                                                <div id="card-errors" class="text-danger mt-2"></div>
+                                            </div>
+                                        </div>
+
+                                    <button type="submit" data-original-text="Confirm & Pay Now" class="btn btn-primary btn-lg w-100 py-3">
+                                        <i class="bi bi-lock-fill me-2"></i> Confirm & Pay Now
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+
+
+@section Scripts {
+    <script>
+
+        function togglePaymentSections() {
+            var pm = $('input[name="PaymentMethod"]:checked').val();
+            if (pm === 'CreditCard') {
+                $('#stripe‐card‐section').show();
+            } else {
+                $('#stripe‐card‐section').hide();
+            }
+        }
+
+        $(document).ready(function () {
+            togglePaymentSections();
+            $('input[name="PaymentMethod"]').on('change', togglePaymentSections);
+        });
+
+        const stripe = Stripe("@Configuration["Stripe:PublishableKey"]");
+        const elements = stripe.elements();
+        const cardElement = elements.create('card');
+        cardElement.mount('#card-element');
+        cardElement.on('change', function (event) {
+            var displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+
+        document.getElementById("Quantity").addEventListener('change', function () {
+            const price = @Model.Trip.Price;
+            const travelers = this.value;
+            const total = price * travelers;
+
+            document.getElementById("travelersCount").textContent = travelers;
+            document.getElementById("basePrice").textContent = (price * travelers).toLocaleString();
+            document.getElementById("totalPrice").textContent = total.toLocaleString();
+        });
+    </script>
+
+  
+}

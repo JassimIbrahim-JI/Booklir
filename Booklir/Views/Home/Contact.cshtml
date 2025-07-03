@@ -1,0 +1,320 @@
+﻿@using Booklir.enums
+@model Booklir.ViewModels.User.ContactViewModel
+
+@{
+    ViewData["Title"] = "Contact Us";
+    var contactMethods = Enum.GetValues(typeof(ContactMethod))
+        .Cast<ContactMethod>()
+        .Select(v => new SelectListItem
+                {
+                    Text = v.ToString(),
+                    Value = v.ToString()
+                }).ToList();
+}
+
+<style>
+    .section-header {
+        display: inline-block;
+        position: relative;
+        padding-bottom: 0.25rem;
+    }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 50px;
+            height: 3px;
+            background-color: #800020;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+    /* Map fixes */
+    .map-container {
+        height: 400px;
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        margin-top: 40px;
+    }
+
+        .map-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+    /* Form styling */
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+    }
+
+        .form-label i {
+            margin-right: 10px;
+            color: #800020;
+            width: 20px;
+            text-align: center;
+        }
+
+    .form-control {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px 15px;
+        transition: all 0.3s;
+    }
+
+        .form-control:focus {
+            border-color: #800020;
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 32, 0.15);
+        }
+
+
+    .animate-item {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.8s forwards;
+    }
+
+        .animate-item:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .animate-item:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .animate-item:nth-child(3) {
+            animation-delay: 0.5s;
+        }
+
+        .animate-item:nth-child(4) {
+            animation-delay: 0.7s;
+        }
+
+    @@keyframes fadeInUp {
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .input-group-icon {
+        position: relative;
+    }
+
+        .input-group-icon .form-control {
+            padding-left: 40px;
+        }
+
+        .input-group-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #800020;
+            z-index: 10;
+        }
+</style>
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="section-header">Contact Us</h2>
+        <p class="text-muted mt-2">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7 mb-4">
+            <div class="contact-form">
+                <form asp-action="Contact" method="post" id="contactForm">
+                    <div class="mb-4">
+                        <h3 class="text-center mb-4" style="color: #800020;">Send us a message</h3>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="FullName" class="form-label">
+                                <i class="bi bi-person"></i> Full Name *
+                            </label>
+                            <div class="input-group-icon">
+                                <i class="bi bi-person"></i>
+                                <input asp-for="FullName" class="form-control" placeholder="Your name">
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger small d-block mt-1"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Email" class="form-label">
+                                <i class="bi bi-envelope"></i> Email *
+                            </label>
+                            <div class="input-group-icon">
+                                <i class="bi bi-envelope"></i>
+                                <input asp-for="Email" class="form-control" placeholder="your.email@example.com">
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small d-block mt-1"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="PhoneNumber" class="form-label">
+                            <i class="bi bi-telephone"></i> Phone Number
+                        </label>
+                        <div class="input-group-icon">
+                            <i class="bi bi-telephone"></i>
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="+1 (555) 123-4567">
+                        </div>
+                        <span asp-validation-for="PhoneNumber" class="text-danger small d-block mt-1"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Subject" class="form-label">
+                            <i class="bi bi-card-heading"></i> Subject *
+                        </label>
+                        <div class="input-group-icon">
+                            <i class="bi bi-card-heading"></i>
+                            <input asp-for="Subject" class="form-control" placeholder="How can we help you?">
+                        </div>
+                        <span asp-validation-for="Subject" class="text-danger small d-block mt-1"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Message" class="form-label">
+                            <i class="bi bi-chat-text"></i> Message *
+                        </label>
+                        <div class="input-group-icon">
+                            <i class="bi bi-chat-text" style="top: 20px;"></i>
+                            <textarea asp-for="Message" class="form-control" rows="5" placeholder="Your message..."></textarea>
+                        </div>
+                        <span asp-validation-for="Message" class="text-danger small d-block mt-1"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="PreferredMethod" class="form-label">
+                            <i class="bi bi-chat-dots"></i> Preferred Contact Method
+                        </label>
+                        <div class="input-group-icon">
+                            <i class="bi bi-chat-dots"></i>
+                            <select asp-for="PreferredMethod" asp-items="contactMethods" class="form-select"></select>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-contact">
+                            <i class="bi bi-send me-2"></i>Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="contact-info-card">
+                <div class="text-center mb-4">
+                    <h3 style="color: #800020;">Contact Information</h3>
+                    <p class="text-muted">Reach out to us through any of these channels</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-4 animate-item">
+                        <div class="contact-icon">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+                        <div class="contact-info">
+                            <h4>Our Location</h4>
+                            <p>Doha, Qatar<br>West Bay, Diplomatic Area</p>
+                            <a href="https://goo.gl/maps/ABC123" target="_blank" class="btn btn-outline-primary mt-2" style="border-color: #800020; color: #800020;">
+                                <i class="bi bi-map me-1"></i>View on Map
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 mb-4 animate-item">
+                        <div class="contact-icon">
+                            <i class="bi bi-envelope"></i>
+                        </div>
+                        <div class="contact-info">
+                            <h4>Email Us</h4>
+                            <p>support@booklir.com<br>bookings@booklir.com</p>
+                            <a href="mailto:support@booklir.com" class="btn btn-outline-primary mt-2" style="border-color: #800020; color: #800020;">
+                                <i class="bi bi-envelope me-1"></i>Send Email
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 mb-4 animate-item">
+                        <div class="contact-icon">
+                            <i class="bi bi-telephone"></i>
+                        </div>
+                        <div class="contact-info">
+                            <h4>Call Us</h4>
+                            <p>+974 4420 1401<br>+974 4420 1402</p>
+                            <a href="tel:+97444201401" class="btn btn-outline-primary mt-2" style="border-color: #800020; color: #800020;">
+                                <i class="bi bi-telephone me-1"></i>Call Now
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 animate-item">
+                        <div class="contact-icon">
+                            <i class="bi bi-chat"></i>
+                        </div>
+                        <div class="contact-info">
+                            <h4>Social Media</h4>
+                            <div class="d-flex justify-content-center gap-3 mt-3">
+                                <a href="#" class="btn btn-primary rounded-circle p-2" style="background-color: #800020; border-color: #800020;">
+                                    <i class="bi bi-instagram"></i>
+                                </a>
+                                <a href="#" class="btn btn-primary rounded-circle p-2" style="background-color: #800020; border-color: #800020;">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Section -->
+<div class="container">
+    <div class="map-container">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14425.82693556469!2d51.51111364999999!3d25.317184!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e45c534ffdce87f%3A0x44d9319f78ae5c3c!2sWest%20Bay%2C%20Doha%2C%20Qatar!5e0!3m2!1sen!2sus!4v1718223842341!5m2!1sen!2sus"
+                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Form submission animation
+        document.getElementById('contactForm').addEventListener('submit', function (e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...';
+            submitBtn.disabled = true;
+        });
+
+                // Animation for form elements
+                document.querySelectorAll('.form-control').forEach(input => {
+                    input.addEventListener('focus', function() {
+                        this.parentElement.style.transform = 'translateY(-3px)';
+                        this.parentElement.style.boxShadow = '0 5px 15px rgba(128, 0, 32, 0.1)';
+                    });
+
+                    input.addEventListener('blur', function() {
+                        this.parentElement.style.transform = 'translateY(0)';
+                        this.parentElement.style.boxShadow = 'none';
+                    });
+                });
+    </script>
+}

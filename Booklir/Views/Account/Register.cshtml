@@ -1,0 +1,94 @@
+﻿@model Booklir.ViewModels.Authentication.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Create an account";
+    Layout = "_AuthLayout";
+}
+
+<div class="auth-card">
+    <div class="auth-header text-center mb-4">
+        <h2>Get Started</h2>
+        <p>Create your free account</p>
+    </div>
+
+    <form method="post"
+          asp-action="Register"
+          class="needs-validation auth-form register-form"
+          data-ajax="true"
+          data-ajax-success="onRegisterSuccess"
+          data-ajax-failure="onRegisterFailure"
+          novalidate>
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <div class="row g-3 mb-3">
+            <div class="col">
+                <label asp-for="FirstName" class="form-label"></label>
+                <input asp-for="FirstName"
+                       class="form-control"
+                       required />
+                <div class="invalid-feedback">
+                    @Html.ValidationMessageFor(m => m.FirstName)
+                </div>
+            </div>
+            <div class="col">
+                <label asp-for="LastName" class="form-label"></label>
+                <input asp-for="LastName"
+                       class="form-control"
+                       required />
+                <div class="invalid-feedback">
+                    @Html.ValidationMessageFor(m => m.LastName)
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email"
+                   class="form-control"
+                   type="email"
+                   required />
+            <div class="invalid-feedback">
+                @Html.ValidationMessageFor(m => m.Email)
+            </div>
+        </div>
+
+        <div class="mb-3 position-relative">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password"
+                   class="form-control pe-5"
+                   type="password"
+                   minlength="8"
+                   required />
+           
+
+            <div class="invalid-feedback">
+                @Html.ValidationMessageFor(m => m.Password)
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="ConfirmPassword" class="form-label"></label>
+            <input asp-for="ConfirmPassword"
+                   class="form-control"
+                   type="password"
+                   required />
+            <div class="invalid-feedback">
+                @Html.ValidationMessageFor(m => m.ConfirmPassword)
+            </div>
+        </div>
+
+        <button type="submit"
+                class="btn btn-primary w-100 mb-3"
+                data-original-text="Sign Up">
+            Sign Up
+        </button>
+
+        <div class="text-center">
+            <span class="text-muted">Already have an account?</span>
+            <a asp-action="Login" class="text-decoration-none"> Sign In</a>
+        </div>
+    </form>
+</div>

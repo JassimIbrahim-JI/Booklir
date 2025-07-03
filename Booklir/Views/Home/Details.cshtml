@@ -1,0 +1,186 @@
+﻿@model Booklir.ViewModels.Trip.BookingTripViewModel
+
+@{
+    ViewData["Title"] = "Book Trip";
+}
+
+    <style>
+
+
+        /* Card & button hover */
+        .booking-card {
+            border-radius: 0.75rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .booking-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1);
+        }
+
+        /* Sidebar booking form background */
+        .booking-form-container {
+            position: sticky;
+            top: 1.5rem;
+        }
+
+        /* Carousel height */
+        #tripCarousel .carousel-item img {
+            height: 400px;
+            object-fit: cover;
+        }
+
+
+    .accordion-button:focus {
+        box-shadow: none;
+        outline: none;
+    }
+
+    .accordion-button:not(.collapsed) {
+        color: maroon;
+        background-color: #f8f9fa;
+    }
+
+    .accordion-button:not(.collapsed)::after {
+        filter: brightness(0) saturate(100%) invert(13%) sepia(84%) saturate(2781%) hue-rotate(337deg) brightness(91%) contrast(99%);
+    }
+    </style>
+
+
+<div class="container py-5 fade-in">
+    <div class="row g-4">
+        <!-- --- Left: Gallery & Itinerary --- -->
+        <div class="col-12 col-lg-8">
+            <!-- Carousel for Gallery Images -->
+            <div id="tripCarousel" class="carousel slide mb-5" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    @for (int i = 0; i < Model.GalleryImages.Count; i++)
+                    {
+                        <button type="button"
+                                data-bs-target="#tripCarousel"
+                                data-bs-slide-to="@i"
+                                class="@(i == 0 ? "active" : "")"
+                                aria-current="@(i == 0 ? "true" : "false")"
+                                aria-label="Slide @(i + 1)">
+                        </button>
+                    }
+                </div>
+                <div class="carousel-inner rounded shadow-sm">
+                    @for (int i = 0; i < Model.GalleryImages.Count; i++)
+                    {
+                        var imgUrl = Model.GalleryImages[i];
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <img src="@imgUrl"
+                                 class="d-block w-100"
+                                 alt="Trip image @(i + 1)" />
+                        </div>
+                    }
+                </div>
+                <button class="carousel-control-prev"
+                        type="button"
+                        data-bs-target="#tripCarousel"
+                        data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next"
+                        type="button"
+                        data-bs-target="#tripCarousel"
+                        data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+
+            <!-- Trip Title & Dates -->
+            <div class="mb-4">
+                <h2 class="section-title">@Model.Title</h2>
+                <p class="text-muted mt-2">
+                    <i class="bi bi-calendar2-event me-1"></i>
+                    @Model.StartDate.ToString("dd MMM yyyy") &ndash; @Model.EndDate.ToString("dd MMM yyyy")
+                </p>
+                <p>
+                    <strong>Seats Left:</strong> @Model.SeatsLeft
+                </p>
+                <p>
+                    <strong>Price per person:</strong>
+                    <small class="fw-semibold text-price"> QR @Model.Price.ToString("N0")</small>
+                </p>
+            </div>
+
+            <!-- Itinerary Accordion -->
+            <div class="itinerary mb-5">
+                <h4 class="section-title">Itinerary</h4>
+                <div class="accordion mt-3" id="itineraryAccordion">
+                    @foreach (var day in Model.Itinerary)
+                    {
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingDay@(day.DayNumber)">
+                                <button class="accordion-button @(day.DayNumber == 1 ? "" : "collapsed")"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#collapseDay@(day.DayNumber)"
+                                        aria-expanded="@(day.DayNumber == 1 ? "true" : "false")"
+                                        aria-controls="collapseDay@(day.DayNumber)">
+                                    Day @day.DayNumber: @day.Title
+                                </button>
+                            </h2>
+                            <div id="collapseDay@(day.DayNumber)"
+                                 class="accordion-collapse collapse @(day.DayNumber == 1 ? "show" : "")"
+                                 aria-labelledby="headingDay@(day.DayNumber)"
+                                 data-bs-parent="#itineraryAccordion">
+                                <div class="accordion-body">
+                                    @day.Description
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+        <!-- --- Right: “Book This Trip” CTA (GET to Create) --- -->
+        <div class="col-12 col-lg-4">
+            <div class="booking-form-container">
+                <div class="card booking-card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">Book This Trip</h4>
+
+                        <!-- Make this a GET so we land on the Create Booking page -->
+                        <form asp-controller="Booking" asp-action="Create" method="get">
+                            <input type="hidden" asp-for="TripId" />
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-check-circle me-2"></i> Confirm Booking
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center text-muted small">
+                    <p><i class="bi bi-info-circle me-1"></i> You can change your booking until 24 hours before departure.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        // When “Travelers” changes, update TotalPrice = Price * Travelers
+        const pricePerPerson = @Model.Price; // e.g. 250.00
+        const travelersSelect = document.getElementById("Travelers");
+        const totalPriceInput = document.getElementById("TotalPrice");
+
+        function updateTotal() {
+            const num = parseInt(travelersSelect.value);
+            totalPriceInput.value = (pricePerPerson * num).toFixed(2);
+        }
+
+        if (travelersSelect) {
+            travelersSelect.addEventListener("change", updateTotal);
+            // initialize
+            updateTotal();
+        }
+    </script>
+}

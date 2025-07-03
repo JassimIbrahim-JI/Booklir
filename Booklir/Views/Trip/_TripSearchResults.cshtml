@@ -1,0 +1,38 @@
+﻿@using Booklir.ViewModels.Trip
+@model TripSearchViewModel
+
+
+
+
+<div class="row g-4 mb-4">
+    @foreach (var trip in Model.Results.Items)
+    {
+        <div class="col-12 col-sm-6 col-lg-6">
+            <partial name="~/Views/Home/_TripCard.cshtml" model="trip" />
+        </div>
+    }
+</div>
+
+<nav>
+    <ul class="pagination justify-content-center">
+        @for (int i = 1; i <= Model.Results.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.Results.Page ? "active" : "")">
+                <a class="page-link"
+                   asp-controller="Trip"
+                   asp-action="Search"
+                   asp-route-Filters.Query="@Model.Filters.Query"
+                   asp-route-Filters.MinPrice="@Model.Filters.MinPrice"
+                   asp-route-Filters.MaxPrice="@Model.Filters.MaxPrice"
+                   asp-route-Filters.StartDate="@Model.Filters.StartDate?.ToString("yyyy-MM-dd")"
+                   asp-route-Filters.EndDate="@Model.Filters.EndDate?.ToString("yyyy-MM-dd")"
+                   asp-route-Filters.Duration="@Model.Filters.Duration"
+                   asp-route-Filters.DestinationId="@Model.Filters.DestinationId"
+                   asp-route-Filters.Page="@i"
+                   asp-route-Filters.PageSize="@Model.Filters.PageSize">
+                    @i
+                </a>
+            </li>
+        }
+    </ul>
+</nav>

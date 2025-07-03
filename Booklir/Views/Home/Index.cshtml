@@ -1,0 +1,204 @@
+﻿@using Booklir.ViewModels.Trip
+@model Booklir.ViewModels.HomeIndexViewModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+
+@section FullWidth{
+    <div class="container-fluid px-0">
+        <div class="hero-carousel position-relative mb-5">
+            <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    @foreach (var (trip, idx) in Model.FeaturedTrips.Select((t, i) => (t, i)))
+                    {
+                        <div class="carousel-item @(idx == 0 ? "active" : "")">
+                            <img src="@trip.PrimaryImage" class="d-block w-100" alt="@trip.Title" />
+
+                            <div class="carousel-caption">
+                                <h3 class="caption-title">@trip.Title</h3>
+                                <p class="caption-description">@trip.ShortDescription</p>
+                                <div class="caption-footer">
+                                    <span class="price-badge">QR @trip.Price.ToString("N2")</span>
+                                    <a class="btn btn-light btn-sm ms-3"
+                                       asp-action="Details"
+                                       asp-route-id="@trip.Id">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#homeCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#homeCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+
+<!-- Search Bar Section -->
+<div class="search-section mb-5 py-4">
+    <div class="container">
+        <div class="search-card p-4 shadow-sm">
+            <div class="text-center mb-4">
+                <h3 class="text-black mb-3">Find Your Perfect Trip</h3>
+            </div>
+
+            <!-- Point the form at Trip/Search, so it returns your results partial -->
+            <form id="homeSearchForm"
+                  method="get"
+                  asp-controller="Trip"
+                  asp-action="Search">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-white border-0">
+                                <i class="bi bi-search text-primary"></i>
+                            </span>
+                            <input type="text"
+                                   class="form-control border-0 border-bottom py-3"
+                                   name="Query"
+                                   placeholder="Search destinations, trips, activities..."
+                                   value=""
+                                   id="searchTripInput" />
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-floating">
+                            <input type="date"
+                                   class="form-control"
+                                   name="StartDate"
+                                   id="startDateInput" />
+                            <label class="text-muted">Start Date</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="form-floating">
+                            <select class="form-select"
+                                    name="Duration"
+                                    id="durationSelect">
+                                <option value="">Any Duration</option>
+                                <option value="1-3">1-3 Days</option>
+                                <option value="4-7">4-7 Days</option>
+                                <option value="8+">8+ Days</option>
+                            </select>
+                            <label class="text-muted">Trip Duration</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-1">
+                        <button type="submit"
+                                class="btn btn-light btn-lg w-100 h-100">
+                            <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Results Container: initially empty, will be filled by Search action -->
+<div class="container" id="homeSearchResults">
+</div>
+
+<!-- Popular Destinations -->
+<div class="container px-lg-3 px-2 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="section-title">Popular Destinations</h4>
+        <a asp-action="Index" asp-controller="Destination" class="btn btn-outline-primary btn-sm">
+            View All Destinations
+        </a>
+    </div>
+
+    <div class="row">
+        @foreach (var destination in Model.Destinations.Take(3))
+        {
+            <div class="col-md-4 mb-4">
+                <div class="destination-card h-100">
+                    <a asp-controller="Destination" asp-action="Details" asp-route-id="@destination.Id">
+                        <div class="card-bg h-100"
+                             style="background-image: url('@destination.ImageUrl');">
+                            <div class="overlay"></div>
+                            <div class="card-content">
+                                <h5>@destination.Name</h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Trip Categories -->
+@* <section class="container py-5">
+  <div class="text-center mb-4">
+    <h4 class="fw-bold">Browse by Category</h4>
+    <p class="text-muted">Find trips tailored to your style</p>
+  </div>
+  <div class="row g-4">
+    <div class="col-6 col-md-4 col-lg-2 text-center">
+      <div class="category-card p-3 shadow-sm rounded">
+        <i class="bi bi-sun display-4 mb-3 text-warning"></i>
+        <h6>Beach Getaways</h6>
+      </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2 text-center">
+      <div class="category-card p-3 shadow-sm rounded">
+        <i class="bi bi-tree-fill display-4 mb-3 text-success"></i>
+        <h6>Adventure Tours</h6>
+      </div>
+    </div>
+    <!-- repeat for other categories -->
+  </div>
+</section>
+ *@
+<!-- Trip Categories -->
+<section class="container py-5">
+    <div class="text-center mb-4">
+        <h4 class="fw-bold">Browse by Category</h4>
+        <p class="text-muted">Find trips tailored to your style</p>
+    </div>
+    <div class="row justify-content-center g-4">
+        @foreach (var cat in Model.Categories)
+        {
+            <div class="col-6 col-md-4 col-lg-2 text-center">
+                <a asp-controller="Trip"
+                   asp-action="Search"
+                   asp-route-CategoryId="@cat.Id"
+                   class="category-card d-block p-3 shadow-sm rounded text-decoration-none">
+                    <i class="bi @cat.IconCss display-4 mb-3"></i>
+                    <h6 class="text-dark">@cat.Name</h6>
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+
+
+<!--Featured Trips-->
+<div class="container px-lg-3 px-2 py-2 py-lg-4">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="section-title"> Featured Trips </h4>
+    </div>
+    <div class="row" id="featuredTrips">
+        @foreach(var trip in Model.FeaturedTrips)
+        {
+            <div class="col-md-4 mb-4">
+                <partial name="_TripCard" model="trip"/>
+            </div>
+        }
+    </div>
+</div>

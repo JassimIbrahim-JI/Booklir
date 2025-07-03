@@ -1,0 +1,97 @@
+﻿@model Booklir.ViewModels.Trip.TripViewModel
+
+
+<style>
+
+
+    .trip-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+
+        .trip-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1);
+        }
+
+        .trip-card .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+
+    .btn-details {
+        transition: transform 0.3s ease;
+    }
+
+        .btn-details:hover {
+            transform: translateY(-2px);
+        }
+</style>
+
+<div class="card trip-card h-100">
+    <div class="position-relative">
+        <img src="@(Model.PrimaryImage ?? "/images/trip-placeholder.jpg")"
+             alt="@Model.Title"
+             class="card-img-top"
+             loading="lazy" />
+
+        @* “Exclusive” badge overlay if trip.IsFeatured is true *@
+        @if (Model.IsFeatured)
+        {
+            <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-2">
+                Exclusive
+            </span>
+        }
+    </div>
+
+    <div class="card-body d-flex flex-column">
+        <!-- Title -->
+        <h5 class="card-title mb-2">@Model.Title</h5>
+
+        <!-- Dates & Price -->
+        <div class="d-flex justify-content-between mb-3">
+            <small class="text-muted">
+                <i class="bi bi-calendar2-event-fill me-1"></i>
+                @Model.StartDate.ToString("dd MMM yyyy") &ndash; @Model.EndDate.ToString("dd MMM yyyy")
+            </small>
+            <small class="fw-semibold text-price">
+                QR @Model.Price.ToString("N0")
+            </small>
+        </div>
+
+        <!-- Short Description (truncate after ~2 lines) -->
+        <p class="card-text text-truncate" style="max-height: 3.6rem;">
+            @Model.ShortDescription
+        </p>
+
+        <div class="mt-auto pt-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                @if (Model.SeatsLeft > 0)
+                {
+                    <span class="badge bg-success">
+                        <i class="bi bi-people-fill me-1"></i> @Model.SeatsLeft left
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-danger">
+                        <i class="bi bi-x-circle-fill me-1"></i> Sold Out
+                    </span>
+                }
+
+                <span class="badge @(Model.Status == "Open" ? "bg-primary" : "bg-secondary")">
+                    @Model.Status
+                </span>
+            </div>
+
+            <a asp-controller="Home"
+               asp-action="Details"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary btn-details w-100">
+                View Details <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+</div>

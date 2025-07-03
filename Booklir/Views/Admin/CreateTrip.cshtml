@@ -1,0 +1,244 @@
+﻿@model Booklir.ViewModels.Trip.CreateTripViewModel
+@{
+    ViewData["Title"] = "Create Trip";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<style>
+    .image-preview img {
+        width: 100%;
+        height: 150px; 
+        object-fit: cover;
+        border-radius: 0.5rem;
+    }
+</style>
+
+
+@if (TempData["ErrorTrip"] != null)
+{
+    <div class="p-4 alert alert-danger">@TempData["ErrorTrip"]</div>
+}
+@if (TempData["SuccessTrip"] != null)
+{
+    <div class="p-4 alert alert-success">@TempData["SuccessTrip"]</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0"> Create New Trip</h5>
+    </div>
+    <div class="card-body">
+
+        <form asp-action="CreateTrip" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" asp-for="Title"></label>
+                    <input  class="form-control" asp-for="Title"/>
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label" asp-for="Description"></label>
+                    <textarea class="form-control" asp-for="Description" rows="4"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Price">
+                        <label class="form-label" asp-for="Price"></label>
+                        <input type="number" class="form-control" asp-for="Price" step="0.01"/>
+                    </label>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" asp-for="StartDate"></label>
+                    <input type="date" asp-for="StartDate" min="@DateTime.Now.ToString("yyyy-MM-dd")" class="form-control"/>
+                    <span class="text-danger" asp-validation-for="StartDate"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" asp-for="EndDate"></label>
+                       <input type="date" asp-for="EndDate" min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" class="form-control"/>
+                    <span class="text-danger" asp-validation-for="EndDate"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="DestinationId" class="form-label"></label>
+                    <select asp-for="DestinationId"
+                            asp-items="Model.DestinationOptions"
+                            class="form-select">
+                        <option value="">-- Select Destination --</option>
+                        </select>
+                    <span asp-validation-for="DestinationId" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="TripCategoryId" class="form-label"></label>
+                    <select asp-for="TripCategoryId" asp-items="Model.CategoryOptions"
+                            class="form-select">
+                        <option value="">-- Select Category --</option>
+                    </select>
+                    <span asp-validation-for="TripCategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="AvailableSeats" class="form-label"></label>
+                    <input asp-for="AvailableSeats" class="form-control" type="number" min="1">
+                    <span asp-validation-for="AvailableSeats" class="text-danger"></span>
+                </div>
+
+                <!-- Gallery Images (3) -->
+                <div class="col-12">
+                    <div class="border p-3 rounded">
+                        <h5 class="mb-3">Trip Gallery (3 images required)</h5>
+                        <div class="row g-3">
+                            @for (int i = 0; i < 3; i++)
+                            {
+                                <div class="col-md-4">
+                                    <div class="image-upload-card border rounded p-2">
+                                        <input asp-for="GalleryImages"
+                                               type="file"
+                                               class="form-control"
+                                               accept=".png,.jpg,.jpeg" />
+                                        <div class="image-preview mt-2"></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <small class="text-muted">Max 8MB each, PNG/JPG/JPEG only</small>
+                        <span asp-validation-for="GalleryImages" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="border p-3 rounded">
+                        <h5 class="mb-3">Trip Itinerary</h5>
+                        <div id="itinerary-items">
+                            @for (int i = 0; i < Model.Itinerary.Count; i++)
+                            {
+                                <div class="itinerary-item mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-1">
+                                            <input type="number" asp-for="Itinerary[i].DayNumber" class="form-control" placeholder="Day 1, 2, 3" />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="text" asp-for="Itinerary[i].Title" class="form-control" placeholder="Title" />
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="text" asp-for="Itinerary[i].Description" class="form-control" placeholder="Description" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            @if (i > 0)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-danger remove-itinerary">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <button type="button" id="add-itinerary" class="btn btn-sm btn-secondary mt-2">
+                            <i class="bi bi-plus-circle"></i> Add Day
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" asp-for="Status"></label>
+                    <select asp-for="Status" class="form-select">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-check form-switch mt-4">
+                        <input asp-for="IsFeatured" class="form-check-input" type="checkbox" role="checkbox" />
+                        <label asp-for="IsFeatured" class="form-check-label">Featured Trip</label>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>
+                        Create Trip
+                    </button>
+                </div>
+
+            </div>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Image preview
+            document.querySelectorAll('input[type="file"]').forEach(input => {
+                input.addEventListener('change', function (e) {
+                    const preview = this.closest('.image-upload-card').querySelector('.image-preview');
+                    preview.innerHTML = "";
+
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            preview.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded">`;
+                        }
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            });
+
+            // Itinerary management
+            let itemCount = @Model.Itinerary.Count;
+            const itineraryContainer = document.getElementById('itinerary-items');
+
+            // Add itinerary item
+            document.getElementById('add-itinerary').addEventListener('click', () => {
+                const html = `
+                        <div class="itinerary-item mb-3">
+                            <div class="row g-2">
+                                <div class="col-md-1">
+                                    <input name="Itinerary[${itemCount}].DayNumber"
+                                           class="form-control" placeholder="Day" />
+                                </div>
+                                <div class="col-md-4">
+                                    <input name="Itinerary[${itemCount}].Title"
+                                           class="form-control" placeholder="Title" />
+                                </div>
+                                <div class="col-md-4">
+                                    <input name="Itinerary[${itemCount}].Description"
+                                              class="form-control" placeholder="Description"></textarea>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-sm btn-danger remove-itinerary">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                itineraryContainer.insertAdjacentHTML('beforeend', html);
+                itemCount++;
+
+                // Add event to new remove button
+                document.querySelectorAll('.remove-itinerary').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        this.closest('.itinerary-item').remove();
+                    });
+                });
+            });
+
+            // Existing remove buttons
+            document.querySelectorAll('.remove-itinerary').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    this.closest('.itinerary-item').remove();
+                });
+            });
+        });
+    </script>
+}

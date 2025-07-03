@@ -1,0 +1,111 @@
+﻿@using Booklir.Core.Interfaces
+@inject INotificationService NotificationService
+
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var isAdmin = User.IsInRole("Admin");
+    var isSuperAdmin = User.IsInRole("SuperAdmin");
+    var isUser = User.IsInRole("User");
+    var isAuthenticated = User.Identity.IsAuthenticated;
+
+    var isAuthenticatedAndAdmin = isAuthenticated && (isAdmin || isSuperAdmin);
+    var unreadCount = await NotificationService.GetUnReadNotifactionsCountAsync();
+}
+
+<div class="admin-actions-container d-flex align-items-center gap-3">
+   
+    <div class="theme-toggle">
+        <button class="btn btn-icon" data-bs-theme-toggle>
+            <i class="bi bi-moon" data-theme-icon="dark"></i>
+            <i class="bi bi-sun" data-theme-icon="light" style="display: none;"></i>
+        </button>
+    </div>
+
+    <div class="dropdown notifications-dropdown">
+        <button class="btn btn-icon position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-load-notification>
+            <i class="bi bi-bell"></i>
+            @if(unreadCount > 0)
+            {
+                <span class="badge bg-danger notification-badge">@unreadCount</span>
+            }
+        </button>
+        <div class="dropdown-menu dropdown-menu-end p-2">
+            <div class="notification-list">
+                <!--Ajax content loaded here-->
+                <div class="text-center py-2">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dropdown user-dropdown">
+        <button class="btn btn-icon d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown"
+        aria-expanded="false" >
+            @if (!string.IsNullOrEmpty(user.ProfileImageUrl))
+            {
+                <img src="@user.ProfileImageUrl" class="rounded-circle profile-image"
+                alt="@user.FullName" width="40" height="40"/>
+            }
+            else
+            {
+                <i class="bi bi-person-circle fs-4"></i>
+            }
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <div class="dropdown-header px-3">
+                    <h6>@user.FullName</h6>
+                    <small class="text-muted">@user.Email</small>
+                </div>
+            </li>
+            <li> <hr class="dropdown-divider"> </li>
+            <li>
+                <a class="dropdown-item" href="@Url.Action("EditProfile", "Account")">
+                    <i class="bi bi-person me-2"></i> Profile
+                </a>
+            </li>
+            <li> <hr class="dropdown-divider"> </li>
+            <li>
+                <form method="post" asp-action="Logout" asp-controller="Account">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="dropdown-item">
+                        <i class="bi bi-arrow-right me-2"></i> Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+
+</div>
+
+@section Scripts{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+       
+            // Notification loading 
+            
+            $('[data-load-notification]').on('shown.bs.dropdown', function () {
+
+                const $container = $('.notification-list');
+               
+                // Clear previous content
+                $container.html('<div class="text-center py-2"><div class="spinner-border text-primary" role="status"></div></div>')
+
+                // Load notifications
+                $container.load('/Admin/GetNotifications', function () {
+                    $('.notification-item[data-unread="True"]').each(function () {
+                        const notificationId = $(this).data('id');
+                        $.post('/Admin/MarkNotificationAsRead', { notificationId });
+                    });
+                });
+
+            });
+
+        });
+
+
+    </script>
+}

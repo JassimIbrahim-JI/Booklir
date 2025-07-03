@@ -1,0 +1,77 @@
+﻿@model Booklir.ViewModels.Booking.BookingViewModel
+@{
+    ViewData["Title"] = "Confirm Booking";
+}
+
+
+<div class="container text-center">
+    <div class="confirmation-card mx-auto">
+        <div class="checkmark">
+            <i class="bi bi-check-circle-fill text-success"></i>
+        </div>
+        <h2 class="mb-3">Booking Confirmed!</h2>
+        <p class="lead">Thank you for booking with us. Your reservation details are below.</p>
+
+        <div class="confirmation-details">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">@Model.TripTitle</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <i class="bi bi-calender me-2"></i>
+                                    @Model.Trip.StartDate.ToString("d") -
+                                    @Model.Trip.EndDate.ToString("d")
+                                </li>
+                                 <li class="list-group-item">
+                                    <i class="bi bi-people me-2"></i>
+                                      @Model.Quantity traveler@(Model.Quantity > 1 ? "s":"")
+                                </li>
+                                <li class="list-group-item">
+                                    <i class="bi bi-credit-card me-2"></i>
+                                     Total Paid :QAR @(Model.Trip.Price * Model.Quantity)
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="mt-4">
+            <a asp-action="Invoice" asp-route-id="@Model.Id" class="btn btn-outline-primary me-2">
+                <i class="bi bi-file-pdf me-2"></i> Download Invoice
+            </a>
+            <a asp-action="Index" asp-controller="Booking" class="btn btn-primary">
+                <i class="bi bi-search me-2"></i> Browse More Trips
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .confirmation-card {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+    }
+
+    .checkmark {
+        font-size: 50px;
+        color: #28a745;
+        text-align: center;
+    }
+
+    .confirmation-details {
+        margin-top: 20px;
+    }
+
+    .confirmation-details .card {
+        border-radius: 10px;
+    }
+</style>

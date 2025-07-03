@@ -1,0 +1,185 @@
+﻿@using Booklir.enums
+@model Booklir.ViewModels.Booking.BookingListViewModel
+@{
+    ViewData["Title"] = "Bookings";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var p = Model.Parameters;
+    var totalPages = (int)Math.Ceiling(Model.TotalCount / (double)p.PageSize);
+    bool isTrashView = p.ShowDeleted;
+}
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex align-items-center">
+        <h5 class="me-auto">@(!isTrashView ? "Manage Bookings" : "Booking Trash")</h5>
+
+        <!-- Bulk Actions -->
+        <form id="bulkForm" asp-action="BulkBookings" method="post" class="d-flex gap-2">
+            @Html.AntiForgeryToken()
+            <select class="form-select form-select-sm" name="Action">
+                <option value="">Bulk Action</option>
+                <optgroup label="Lifecycle">
+                    @if (!isTrashView)
+                    {
+                        <option value="Confirm">Confirm</option>
+                        <option value="Cancel">Cancel</option>
+                    }
+                    else
+                    {
+                        <option value="Restore">Restore</option>
+                    }
+                </optgroup>
+                <optgroup label="Destructive">
+                    <option value="HardDelete">Delete Permanently</option>
+                </optgroup>
+                <optgroup label="Financial">
+                    <option value="Refund">Refund</option>
+                    <option value="MarkPaid">Mark as Paid</option>
+                </optgroup>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+        </form>
+    </div>
+
+    <div class="card-body">
+        <!-- Filters -->
+        <form method="get" class="row g-2 mb-3">
+            <div class="col-auto">
+                <input type="text" name="Search" class="form-control form-control-sm" value="@p.Search" placeholder="Search bookings..." />
+            </div>
+            <div class="col-auto">
+                <input type="date" name="FromDate" value="@p.FromDate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-auto">
+                <input type="date" name="ToDate" value="@p.ToDate?.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-auto">
+                <select class="form-select form-select-sm" name="Status">
+                    <option value="">All Statuses</option>
+                    @foreach (BookingStatus s in Enum.GetValues(typeof(BookingStatus)))
+                    {
+                        <option value="@s" selected="@(p.Status == s)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" /></th>
+                        <th>User</th>
+                        <th>Trip</th>
+                        <th>Booking Date</th>
+                        <th>Payment Method</th>
+                        <th>Payment Status</th>
+                        <th>Booking Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.Items)
+                    {
+                        <tr class="@(b.Status == BookingStatus.Pending ? "table-secondary" : "")">
+                            <td><input type="checkbox" name="Ids" value="@b.Id" form="bulkForm" /></td>
+                            <td>@b.UserName</td>
+                            <td>@b.TripTitle</td>
+                            <td>@b.BookingDate:d</td>
+                            <td>@b.PaymentMethod</td>
+                            <td class="payment-status-cell">
+                                @switch (b.PaymentStatus)
+                                {
+                                    case PaymentStatus.UNPAID:
+                                        <span class="badge bg-warning">Unpaid</span>
+                                        break;
+                                    case PaymentStatus.PAID:
+                                        <span class="badge bg-success">Paid</span>
+                                        break;
+                                    case PaymentStatus.PENDING:
+                                        <span class="badge bg-info">Pending</span>
+                                        break;
+                                    case PaymentStatus.FAILED:
+                                        <span class="badge bg-danger">Failed</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group dropstart">
+                                    <span class="badge py-1 px-2 me-1 bg-@(b.Status == BookingStatus.Pending ? "warning" : b.Status == BookingStatus.Confirmed ? "primary" : b.Status == BookingStatus.Cancelled ? "danger" : "secondary")">
+                                        @b.Status
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split p-1" data-bs-toggle="dropdown">
+                                        <span class="visually-hidden">Change status</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        @foreach (BookingStatus s in Enum.GetValues(typeof(BookingStatus)))
+                                        {
+                                            <li>
+                                                <a class="dropdown-item change-status" data-id="@b.Id" data-status="@s">@s</a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </td>
+                            <td>
+                                <a asp-action="DownloadBookingInvoice" asp-route-bookingId="@b.Id" class="btn btn-sm btn-outline-info" title="Invoice">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </a>
+
+                                @if (b.IsDeleted)
+                                {
+                                    <button class="btn btn-sm btn-outline-success restore-booking" data-id="@b.Id" title="Restore">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger hard-delete-booking" data-id="@b.Id" title="Delete Permanently">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-danger cancel-booking" data-id="@b.Id" title="Cancel">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                    @if (b.PaymentStatus == PaymentStatus.UNPAID && b.PaymentMethod == PaymentMethod.Cash)
+                                    {
+                                        <button class="btn btn-sm btn-success mark-cash-paid" data-id="@b.Id" title="Mark Paid">
+                                            <i class="bi bi-cash-stack"></i>
+                                        </button>
+                                    }
+                                    @if (b.PaymentStatus == PaymentStatus.PAID)
+                                    {
+                                        <button class="btn btn-sm btn-warning refund-booking" data-id="@b.Id" title="Refund">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Booking Pagination">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(p.Page == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Bookings" asp-route-Page="@(p.Page - 1)" asp-route-PageSize="@p.PageSize">Previous</a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == p.Page ? "active" : "")">
+                        <a class="page-link" asp-action="Bookings" asp-route-Page="@i" asp-route-PageSize="@p.PageSize">@i</a>
+                    </li>
+                }
+                <li class="page-item @(p.Page == totalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Bookings" asp-route-Page="@(p.Page + 1)" asp-route-PageSize="@p.PageSize">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+﻿@model Booklir.ViewModels.Trip.TripSearchViewModel
+@{
+    ViewData["Title"] = "Search Trip";
+}
+
+<div class="container py-5 fade-in">
+    <div class="row g-4">
+        <!-- Sidebar Filters -->
+        <div class="col-lg-4">
+            <partial name="~/Views/Trip/_TripSearchFilters.cshtml" model="Model" />
+        </div>
+
+        <!-- Results -->
+        <div class="col-lg-8" id="searchResultsContainer">
+            <partial name="~/Views/Trip/_TripSearchResults.cshtml" model="Model" />
+        </div>
+    </div>
+</div>

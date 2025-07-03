@@ -1,0 +1,25 @@
+﻿@model IEnumerable<Booklir.Models.Notification>
+
+
+@foreach(var notification in Model)
+{
+    <div class="notification-item @(!notification.IsRead ? "unread" : "")" data-id="@notification.Id" data-unread="@(!notification.IsRead)">
+        <div class="notification-content">
+            <p class="notification-text">@notification.Message</p>
+            <span class="notification-time text-muted small">@notification.CreatedAt.ToString("g")</span>
+        </div>
+    </div>
+}
+@if (!Model.Any())
+{
+        <div class="text-muted text-center py-2">
+        <p class="text-muted">No new notifications</p>
+    </div>
+}
+
+<style>
+    .notification-item.unread{
+        background:#f8f9fa;
+        border-left: 3px solid #0d6efd;
+    }
+</style>

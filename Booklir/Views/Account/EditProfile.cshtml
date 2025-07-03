@@ -1,0 +1,103 @@
+﻿@model Booklir.ViewModels.User.EditProfileViewModel
+@{
+    ViewData["Title"] = "Edit Profile";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var FullName = Model.FirstName + " " + Model.LastName;
+
+}
+
+@if(TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">My Profile - @FullName</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-action="EditProfile" enctype="multipart/form-data">
+          @Html.AntiForgeryToken()
+           <input type="hidden" asp-for="Id">
+            <div asp-validation-summary="All" class="text-danger"></div>
+          <div class="row g-3">
+              <div class="col-md-4">
+                  <div class="mb-3">
+                      <label asp-for="ProfileImage" class="form-label"></label>
+                       <div class="profile-image-container">
+                            @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                            {
+                                <img id="profileImagePreview" src="@Model.ProfileImageUrl" alt="Profile Image" class="img-thumbnail rounded-circle mb-1" width="100" height="100">
+                            }
+                            else
+                            {
+                                <img id="profileImagePreview" src="~/images/default-avatar.png" alt="Default Profile Image" class="img-thumbnail rounded-circle mb-1" width="100" height="100">
+                            }
+                            <input id="profileImageInput" asp-for="ProfileImage" type="file" class="form-control" accept="image/*">
+                            <span asp-validation-for="ProfileImage" class="text-danger"></span>
+                        </div>
+                  </div>
+              </div>
+              <div class="col-md-8">
+                  <div class="mb-3">
+                      <label asp-for="FirstName" class="form-label"></label>
+                      <input asp-for="FirstName" class="form-control" type="text"/>
+                      <span asp-validation-for="FirstName" class="text-danger"></span>
+                  </div>
+                  <div class="mb-3">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" type="text" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                  </div>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input type="email" asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ThemePreference" class="form-label"></label>
+                        <select asp-for="ThemePreference" asp-items="Model.ThemeOptions" class="form-select"></select>
+
+                      
+                    </div>
+              </div>
+                <div class="col-12 text-end mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Update Profile
+                    </button>
+                </div>
+
+          </div>
+        </form>
+    </div>
+</div>
+
+
+@section Scripts{
+    <script>
+        document.getElementById('profileImageInput').addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            if(file){
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('profileImagePreview')
+                        .src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        const updatedTheme = '@TempData["UpdatedTheme"]';
+        if (updatedTheme)
+        {
+            localStorage.setItem('admin-theme',updatedTheme);
+        }
+
+        @if (TempData["ThemePreference"] != null)
+        {
+            <text>
+                localStorage.setItem('admin-theme', '@TempData["ThemePreference"]');
+            </text>
+        }
+    </script>
+}

@@ -1,0 +1,138 @@
+﻿@model IEnumerable<Booklir.ViewModels.Trip.TripViewModel>
+@{
+    ViewData["Title"] = "Featured Trips";
+}
+
+    <style>
+
+
+        /* Card hover effect: slight lift and shadow */
+        .trip-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        .trip-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1);
+        }
+
+        /* Image container to enforce aspect ratio */
+        .trip-card .card-img-top {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        /* Title underline accent */
+        .section-header {
+            display: inline-block;
+            position: relative;
+            padding-bottom: 0.25rem;
+        }
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 50px;
+            height: 3px;
+            background-color: #800020;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        /* Button transition */
+        .btn-details {
+            transition:transform 0.3s ease;
+        }
+        .btn-details:hover {
+            transform: translateY(-2px);
+        }
+
+    </style>
+
+
+<div class="container py-5 fade-in">
+    <!-- Section Header -->
+    <div class="text-center mb-5">
+        <h2 class="section-header">Featured Trips</h2>
+        <p class="text-muted mt-2">Handpicked journeys for your next adventure</p>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning text-center">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            No featured trips available at the moment. Check back soon!
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var trip in Model)
+            {
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="card trip-card h-100">
+                        @* Primary image (first from gallery) or placeholder *@
+                        <img src="@(trip.PrimaryImage ?? "/images/trip-placeholder.jpg")"
+                             alt="@trip.Title"
+                             class="card-img-top"
+                             loading="lazy" />
+
+                        <div class="card-body d-flex flex-column">
+                            <!-- Trip Title -->
+                            <h5 class="card-title mb-2">@trip.Title</h5>
+
+                            <!-- Dates and Price Row -->
+                            <div class="d-flex justify-content-between mb-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar2-event-fill me-1"></i>
+                                    @trip.StartDate.ToString("dd MMM yyyy")
+                                    &ndash;
+                                    @trip.EndDate.ToString("dd MMM yyyy")
+                                </small>
+                                <small class="fw-semibold text-price">
+                                    QR @trip.Price.ToString("N0")
+                                </small>
+                            </div>
+
+                            <!-- Short Description (truncate if too long) -->
+                            <p class="card-text text-truncate" style="max-height: 3.6rem;">
+                                @trip.ShortDescription
+                            </p>
+
+                            <div class="mt-auto pt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    @if (trip.SeatsLeft > 0)
+                                    {
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-people-fill me-1"></i> @trip.SeatsLeft left
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle-fill me-1"></i> Sold Out
+                                        </span>
+                                    }
+                                    <span class="badge @(trip.Status == "Open" ? "bg-primary" : "bg-secondary")">
+                                        @trip.Status
+                                    </span>
+                                </div>
+
+                                <a asp-controller="Home"
+                                   asp-action="Details"
+                                   asp-route-id="@trip.Id"
+                                   class="btn btn-primary btn-details w-100">
+                                    View Details
+                                    <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

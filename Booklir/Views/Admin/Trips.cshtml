@@ -1,0 +1,289 @@
+﻿@model Booklir.ViewModels.Trip.TripListViewModel
+@{
+    ViewData["Title"] = "Trips";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var pageSize = Model.Parameters.PageSize;
+    var currentPage = Model.Parameters.PageNumber;
+    var totalCount = Model.TotalTrips;
+    var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+}
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <h5 class="mb-0">Manage Trips</h5>
+                <a asp-action="CreateTrip" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-2"></i>New Trip
+                </a>
+            </div>
+
+            <div class="d-flex gap-2 mt-2 mt-sm-0">
+                <form id="bulkForm" method="post" asp-action="Bulk" class="d-flex gap-2">
+                    @Html.AntiForgeryToken()
+                    <select name="Action" class="form-select form-select-sm w-auto">
+                        <option value="">Bulk Actions</option>
+                        <option value="Delete">Soft-Delete</option>
+                        <option value="Restore">Restore</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Apply</button>
+                </form>
+
+                <a asp-action="ExportTrip"
+                   class="btn btn-sm btn-outline-secondary"
+                   asp-route-SearchTerm="@Model.Parameters.SearchTerm"
+                   asp-route-FromDate="@(Model.Parameters.FromDate?.ToString("yyyy-MM-dd"))"
+                   asp-route-ToDate="@(Model.Parameters.ToDate?.ToString("yyyy-MM-dd"))"
+                   asp-route-Status="@Model.Parameters.Status"
+                   asp-route-Page="@Model.Parameters.PageNumber"
+                   asp-route-PageSize="@Model.Parameters.PageSize"
+                   asp-route-ShowDeleted="@Model.Parameters.ShowDeleted">
+                    <i class="bi bi-download me-2"></i>Export
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body pt-0">
+        <!-- Filters -->
+        <form id="filterForm" method="get" class="row g-3 mb-4 p-3 rounded">
+            <div class="col-md-2">
+                <input type="text" class="form-control form-control-sm"
+                       name="SearchTerm" value="@Model.Parameters.SearchTerm"
+                       placeholder="Search trips...">
+            </div>
+
+            <div class="col-md-2">
+                <input type="date" class="form-control form-control-sm"
+                       name="FromDate" value="@Model.Parameters.FromDate?.ToString("yyyy-MM-dd")"
+                       placeholder="From date">
+            </div>
+
+            <div class="col-md-2">
+                <input type="date" class="form-control form-control-sm"
+                       name="ToDate" value="@Model.Parameters.ToDate?.ToString("yyyy-MM-dd")"
+                       placeholder="To date">
+            </div>
+
+            <div class="col-md-2">
+                <select name="ShowDeleted" class="form-select form-select-sm">
+                    <option value="">All Trips</option>
+                    <option value="false" selected="@(Model.Parameters.ShowDeleted == "false")">
+                        Active Only
+                    </option>
+                    <option value="true" selected="@(Model.Parameters.ShowDeleted == "true")">
+                        Deleted Only
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <select name="Status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="Active" selected="@(Model.Parameters.Status == "Active")">Active</option>
+                    <option value="Inactive" selected="@(Model.Parameters.Status == "Inactive")">Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary flex-grow-1">
+                    <i class="bi bi-funnel me-2"></i>Apply
+                </button>
+                <button type="button" id="resetFilters" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-repeat"></i>
+                </button>
+            </div>
+        </form>
+
+        <!-- Trip Summary -->
+        <div class="alert alert-info py-2 mb-3">
+            <div class="d-flex flex-wrap justify-content-between">
+                <span>
+                    Showing <strong>@Model.Trips.Count()</strong> of <strong>@totalCount</strong> trips
+                </span>
+                <span>
+                    <span class="text-success"><strong>@Model.Trips.Count(t => !t.IsDeleted)</strong> active</span> |
+                    <span class="text-danger"><strong>@Model.Trips.Count(t => t.IsDeleted)</strong> deleted</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="table-responsive rounded border">
+            <table class="table table-hover mb-0">
+                <caption class="visually-hidden">Trip management table</caption>
+                <thead class="table-light">
+                    <tr>
+                        <th width="50"><input type="checkbox" id="selectAll" /></th>
+                        <th>Trip Title</th>
+                        <th>Dates</th>
+                        <th>Price</th>
+                        <th>Seats</th>
+                        <th>Status</th>
+                        <th>Record Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var trip in Model.Trips)
+                    {
+                        <tr class="@(trip.IsDeleted ? "table-warning" : "")">
+                            <td><input type="checkbox" name="Ids" value="@trip.Id" form="bulkForm" /></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    @trip.Title
+                                    @if (trip.IsDeleted)
+                                    {
+                                        <span class="badge bg-danger ms-2">Deleted</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>@trip.StartDate.ToString("d") - @trip.EndDate.ToString("d")</td>
+                            <td>@trip.Price.ToString("C")</td>
+                            <td>@trip.SeatsLeft</td>
+                            <td>
+                                <span class="badge bg-@(trip.Status == "Active" ? "success" : "danger")">
+                                    @trip.Status
+                                </span>
+                            </td>
+                            <td>
+                                @if (trip.IsDeleted)
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-trash me-1"></i>Deleted
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>Active
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-2 text-end">
+                                <div class="btn-group">
+                                    <a asp-action="UpdateTrip" title="Edit"
+                                       asp-route-id="@trip.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    @if (trip.IsDeleted)
+                                    {
+                                        <button type="button" title="Restore"
+                                                class="btn btn-sm btn-outline-success restore-trip"
+                                                data-id="@trip.Id"
+                                                data-title="@trip.Title">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+
+                                        <button type="button" title="Delete Permanently"
+                                                class="btn btn-sm btn-outline-danger hard-delete-trip"
+                                                data-id="@trip.Id"
+                                                data-title="@trip.Title">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger soft-delete-trip"
+                                                title="Delete"
+                                                data-id="@trip.Id"
+                                                type="button">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Trips navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="Trips"
+                       asp-route-SearchTerm="@Model.Parameters.SearchTerm"
+                       asp-route-FromDate="@(Model.Parameters.FromDate?.ToString("yyyy-MM-dd"))"
+                       asp-route-ToDate="@(Model.Parameters.ToDate?.ToString("yyyy-MM-dd"))"
+                       asp-route-Status="@Model.Parameters.Status"
+                       asp-route-Page="@(currentPage - 1)"
+                       asp-route-ShowDeleted="@Model.Parameters.ShowDeleted"
+                       asp-route-PageSize="@Model.Parameters.PageSize">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @for (var p = 1; p <= totalPages; p++)
+                {
+                    <li class="page-item @(p == currentPage ? "active" : "")">
+                        <a class="page-link"
+                           asp-action="Trips"
+                           asp-route-SearchTerm="@Model.Parameters.SearchTerm"
+                           asp-route-FromDate="@(Model.Parameters.FromDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-ToDate="@(Model.Parameters.ToDate?.ToString("yyyy-MM-dd"))"
+                           asp-route-Status="@Model.Parameters.Status"
+                           asp-route-Page="@p"
+                           asp-route-ShowDeleted="@Model.Parameters.ShowDeleted"
+                           asp-route-PageSize="@Model.Parameters.PageSize">
+                            @p
+                        </a>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="Trips"
+                       asp-route-SearchTerm="@Model.Parameters.SearchTerm"
+                       asp-route-FromDate="@(Model.Parameters.FromDate?.ToString("yyyy-MM-dd"))"
+                       asp-route-ToDate="@(Model.Parameters.ToDate?.ToString("yyyy-MM-dd"))"
+                       asp-route-Status="@Model.Parameters.Status"
+                       asp-route-Page="@(currentPage + 1)"
+                       asp-route-ShowDeleted="@Model.Parameters.ShowDeleted"
+                       asp-route-PageSize="@Model.Parameters.PageSize">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Reset filters functionality
+        document.getElementById('resetFilters')?.addEventListener('click', function () {
+            const form = document.getElementById('filterForm');
+            if (!form) return;
+
+            // Reset all form elements
+            const elements = form.elements;
+            for (let i = 0; i < elements.length; i++) {
+                const element = elements[i];
+                switch (element.type) {
+                    case 'text':
+                    case 'select-one':
+                        element.value = '';
+                        break;
+                    case 'date':
+                        element.value = '';
+                        break;
+                    case 'checkbox':
+                    case 'radio':
+                        element.checked = false;
+                        break;
+                }
+            }
+
+            // Submit the form after reset
+            form.submit();
+        });
+
+    
+    </script>
+}

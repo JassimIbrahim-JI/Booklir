@@ -1,0 +1,38 @@
+﻿@model Booklir.ViewModels.Authentication.NotificationViewModel
+
+<div class="position-relative me-3">
+    <button class="btn btn-link text-white p-0" id="notifDropdown" data-bs-toggle="dropdown">
+        <i class="bi bi-bell fs-5"></i>
+        @if (Model.UnreadCount > 0)
+        {
+                <span class="badge bg-danger rounded-circle position-absolute top-0 start-100 translate-middle p-1">@Model.UnreadCount</span>
+        }
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="notifDropdown">
+        <li class="px-3 py-2 text-muted small">Notifications</li>
+        <li><hr class="dropdown-divider"></li>
+
+        @if (Model.Notifications.Any())
+        {
+            @foreach (var notification in Model.Notifications)
+            {
+                        <li>
+                            <a class="dropdown-item @(notification.IsRead ? "" : "fw-bold")" 
+                               href="@(notification.RelatedUrl ?? "#")"
+                               data-notification-id="@notification.Id">
+                                <i class="bi @(notification.IsRead ? "bi-check-circle" : "bi-exclamation-circle") me-2"></i>
+                        @notification.Message
+                                <div class="text-muted small">@notification.CreatedAt.ToString("g")</div>
+                            </a>
+                        </li>
+            }
+        }
+        else
+        {
+                <li><a class="dropdown-item text-muted" href="#">No notifications yet</a></li>
+        }
+
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-center small" asp-controller="Notifications" asp-action="Index">View All</a></li>
+    </ul>
+</div>
