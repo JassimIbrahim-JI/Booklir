@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 using System.Security.Claims;
 
 namespace Booklir.Controllers
@@ -952,8 +953,13 @@ namespace Booklir.Controllers
         [HttpGet]
         public async Task<IActionResult> GetNotifications()
         {
-            var notification = await _notificationService.GetRecentNotifactionsAsync();
-            return PartialView("~/Views/Shared/Components/_NotificationPartial.cshtml", notification);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var notifications = await _notificationService.GetUserNotificationsAsync(userId);
+            return PartialView(
+                "~/Views/Shared/Components/_NotificationPartial.cshtml",
+                notifications
+            );
+
         }
 
         [HttpPost]

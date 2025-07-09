@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Booklir.Core.Interfaces;
 using Booklir.Core.RazorHelper;
+using Booklir.enums;
 using Booklir.Infrastructure.Data;
 using Booklir.Models;
 using Booklir.ViewModels.Booking;
@@ -96,6 +97,10 @@ namespace Booklir.Controllers
             if (user == null)
                 return Json(new { success = false, message = "User not found" });
 
+            var trip = await _tripService.GetTripByIdAsync(model.TripId);
+            if (trip == null)
+                return Json(new { success = false, message = "Trip not found" });
+
             try
             {
                 var (bookingId, clientSecret) =
@@ -109,20 +114,20 @@ namespace Booklir.Controllers
 
 
                 // 2) notify the booker (user)
-                var userMessage = $"Your booking #{bookingId} for “{model.Trip.Title}” has been placed.";
+                var userMessage = $"Your booking #{bookingId} for “{trip.Title}” has been placed.";
                 var userUrl = Url.Action("Confirmation", "Booking", new { id = bookingId });
                 await _notificationService
-                    .CreateNotificationAsync(user.Id, userMessage, userUrl);
+                    .CreateNotificationAsync(user.Id, userMessage, "Booking",userUrl);
 
                 // 3) notify all admins (or swap for a single trip‐owner)
                 var admins = await _userManager.GetUsersInRoleAsync("Admin");
                 var adminUrl = Url.Action("Details", "Admin", new { id = bookingId });
-                var adminMessage = $"New booking #{bookingId} by {user.FullName} on “{model.Trip.Title}.”";
+                var adminMessage = $"New booking #{bookingId} by {user.FullName} on “{trip.Title}.”";
 
                 foreach (var admin in admins)
                 {
                     await _notificationService
-                        .CreateNotificationAsync(admin.Id, adminMessage, adminUrl);
+                        .CreateNotificationAsync(admin.Id, adminMessage,"BookingAlert",adminUrl);
                 }
 
 
@@ -159,6 +164,23 @@ namespace Booklir.Controllers
             }
         }
 
+
+
+        [Authorize, HttpPost]
+        [Route("api/Payment/MarkPaid")]
+        public async Task<IActionResult> MarkPaid(int bookingId)
+        {
+            var success = await _bookingService.MarkPaymentStatusAsync(bookingId, PaymentStatus.PAID);
+            return success ? Ok() : BadRequest();
+        }
+
+        [Authorize, HttpPost]
+        [Route("api/Payment/MarkFailed")]
+        public async Task<IActionResult> MarkFailed(int bookingId)
+        {
+            var success = await _bookingService.MarkPaymentStatusAsync(bookingId, PaymentStatus.FAILED);
+            return success ? Ok() : BadRequest();
+        }
 
         [Authorize, HttpGet]
         public async Task<IActionResult> Confirmation(int id)

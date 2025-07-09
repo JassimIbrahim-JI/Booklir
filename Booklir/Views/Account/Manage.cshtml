@@ -117,6 +117,7 @@
                     </div>
                     <input asp-for="Profile.ProfileImage"
                            class="form-control custom-input"
+                           id="profileImageInput"
                            type="file"
                            accept=".png,.jpg,.jpeg" />
                     <span asp-validation-for="Profile.ProfileImage" class="text-warning small"></span>
@@ -198,17 +199,20 @@
                                                 <span class="badge bg-secondary">@booking.Status</span>
                                             }
                                         </td>
-                                        <td>
-                                            @if (booking.Status == BookingStatus.Pending)
-                                            {
-                                                <button class="btn btn-sm btn-danger cancel-booking" data-id="@booking.Id">
-                                                    Cancel
-                                                </button>
-                                            }
-                                            <a asp-action="Invoice" asp-route-id="@booking.Id"
-                                               class="btn btn-sm btn-outline-primary ms-1">
-                                                <i class="bi bi-file-earmark-pdf"></i> 
-                                            </a>
+                                        <td class="text-end">
+                                            <div class="d-flex justify-content-end align-items-center gap-1">
+                                                @if (booking.Status == BookingStatus.Pending)
+                                                {
+                                                    <button class="btn btn-sm btn-danger p-1 d-flex align-items-center cancel-booking" data-id="@booking.Id">
+                                                        <i class="bi bi-x-circle"></i>
+                                                    </button>
+                                                }
+                                                <a asp-action="Invoice" asp-route-id="@booking.Id"
+                                                   class="btn btn-sm btn-outline-primary p-1 d-flex align-items-center">
+                                                    <i class="bi bi-file-earmark-pdf"></i>
+                                                </a>
+                                            </div>
+                                          
                                         </td>
                                     </tr>
                                 }

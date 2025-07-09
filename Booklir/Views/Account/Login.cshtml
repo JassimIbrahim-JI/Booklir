@@ -18,6 +18,9 @@
           data-ajax-failure="onLoginFailure">
         @Html.AntiForgeryToken()
 
+        <!-- Pass the returnUrl query‑string into the POST -->
+        <input name="returnUrl" type="hidden" value="@(ViewData["ReturnUrl"] ?? "")" />
+
         <div class="form-group mb-3">
             <label asp-for="Email" class="form-label"></label>
             <input type="email" asp-for="Email" class="form-control" placeholder="Enter email" />

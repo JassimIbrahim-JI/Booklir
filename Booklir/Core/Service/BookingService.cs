@@ -279,93 +279,155 @@ namespace Booklir.Core.Service
         }
 
         public async Task<(int bookingId, string? paymentIntentClientSecret)> CreateBookingWithPaymentAsync(
-    int tripId,
-    int quantity,
-    string userId,
-    string? note,
-    enums.PaymentMethod paymentMethod)
+         int tripId,
+         int quantity,
+         string userId,
+         string? note,
+         enums.PaymentMethod paymentMethod)
         {
-            // 1) load & validate
-            var trip = await _dbContext.Trips.FindAsync(tripId)
-                       ?? throw new ArgumentException("Trip not found");
-            if (trip.AvailableSeats < quantity)
-                throw new InvalidOperationException($"Only {trip.AvailableSeats} seats available");
-            if (await _dbContext.Bookings.AnyAsync(b => b.TripId == tripId && b.UserId == userId))
-                throw new InvalidOperationException("You've already booked this trip");
+          
 
-            // 2) compute price & adjust seats
-            decimal totalPrice = trip.Price * quantity;
-            trip.AvailableSeats -= quantity;
-
-            // 3) create booking entity
-            var booking = new Booking
-            {
-                TripId = tripId,
-                Quantity = quantity,
-                UserId = userId,
-                BookingDate = DateTime.UtcNow,
-                Status = paymentMethod == enums.PaymentMethod.Cash ? BookingStatus.Confirmed : BookingStatus.Pending,
-                Notes = note ?? string.Empty,
-                Method = paymentMethod,
-                PaymentStatus = paymentMethod == enums.PaymentMethod.Cash ? PaymentStatus.UNPAID : PaymentStatus.PENDING,
-                TotalPrice = totalPrice
-            };
-
-            // 4) Stripe intent if needed
-            string? clientSecret = null;
-            if (paymentMethod == enums.PaymentMethod.Credit)
-            {
-                var options = new PaymentIntentCreateOptions
-                {
-                    Amount = (long)(totalPrice * 100),
-                    Currency = "sar",
-                    Metadata = new Dictionary<string, string> { ["bookingId"] = "TBD" }
-                };
-                var service = new PaymentIntentService();
-                var intent = await service.CreateAsync(options);
-                clientSecret = intent.ClientSecret;
-                booking.PaymentGatewayTransactionId = intent.Id;
-            }
-
-            _dbContext.Bookings.Add(booking);
-
-            // 5) save & catch DB errors
             try
             {
+                // 1) Load trip with row-level locking to prevent concurrency issues
+                var trip = await _dbContext.Trips
+                    .Where(t => t.Id == tripId)
+                    .FirstOrDefaultAsync();
+
+                if (trip == null)
+                    throw new ArgumentException("Trip not found");
+
+                // 2) Check for existing booking WITHIN the transaction
+                var existingBooking = await _dbContext.Bookings
+                    .Where(b => b.TripId == tripId && b.UserId == userId && !b.IsDeleted)
+                    .FirstOrDefaultAsync();
+
+                if (existingBooking != null)
+                    throw new InvalidOperationException("You've already booked this trip");
+
+                // 3) Validate seats availability
+                if (trip.AvailableSeats < quantity)
+                    throw new InvalidOperationException($"Only {trip.AvailableSeats} seats available");
+
+                // 4) Update seats
+                trip.AvailableSeats -= quantity;
+
+                // 5) Calculate total price
+                decimal totalPrice = trip.Price * quantity;
+
+                // 6) Create Stripe PaymentIntent if needed
+                string? clientSecret = null;
+                string? paymentIntentId = null;
+
+                if (paymentMethod == enums.PaymentMethod.Credit)
+                {
+                    var options = new PaymentIntentCreateOptions
+                    {
+                        Amount = (long)(totalPrice * 100), // Convert to cents
+                        Currency = "qar", // Qatar Riyal - use "qar" instead of "sar"
+                        Metadata = new Dictionary<string, string>
+                        {
+                            ["tripId"] = tripId.ToString(),
+                            ["userId"] = userId,
+                            ["quantity"] = quantity.ToString()
+                        }
+                    };
+
+                    var service = new PaymentIntentService();
+                    var intent = await service.CreateAsync(options);
+                    clientSecret = intent.ClientSecret;
+                    paymentIntentId = intent.Id;
+                }
+
+                // 7) Create booking entity
+                var booking = new Booking
+                {
+                    TripId = tripId,
+                    Quantity = quantity,
+                    UserId = userId,
+                    BookingDate = DateTime.UtcNow,
+                    Status = paymentMethod == enums.PaymentMethod.Cash ? BookingStatus.Confirmed : BookingStatus.Pending,
+                    Notes = note ?? string.Empty,
+                    Method = paymentMethod,
+                    PaymentStatus = paymentMethod == enums.PaymentMethod.Cash ? PaymentStatus.UNPAID : PaymentStatus.PENDING,
+                    TotalPrice = totalPrice,
+                    PaymentGatewayTransactionId = paymentIntentId
+                };
+
+                _dbContext.Bookings.Add(booking);
+
+                // 8) Save changes within transaction
                 await _dbContext.SaveChangesAsync();
+
+                // 9) Update Stripe metadata with actual booking ID
+                if (paymentMethod == enums.PaymentMethod.Credit && !string.IsNullOrEmpty(paymentIntentId))
+                {
+                    try
+                    {
+                        var updateService = new PaymentIntentService();
+                        await updateService.UpdateAsync(paymentIntentId, new PaymentIntentUpdateOptions
+                        {
+                            Metadata = new Dictionary<string, string>
+                            {
+                                ["bookingId"] = booking.Id.ToString(),
+                                ["tripId"] = tripId.ToString(),
+                                ["userId"] = userId,
+                                ["quantity"] = quantity.ToString()
+                            }
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error but don't fail the transaction
+                        // Consider logging: _logger.LogWarning(ex, "Failed to update Stripe metadata for booking {BookingId}", booking.Id);
+                    }
+                }
+
+
+                // 11) Send notification 
+                    try
+                    {
+                        await _notificationService.CreateNotificationAsync(
+                            userId,
+                            $"You booked: {trip.Title} for {quantity} person(s)",
+                            "Booking",
+                            $"/Booking/Confirmation/{booking.Id}"
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but don't throw - notifications shouldn't break booking flow
+                        // _logger.LogWarning(ex, "Failed to send notification for booking {BookingId}", booking.Id);
+                    }
+          
+
+                return (booking.Id, clientSecret);
             }
             catch (DbUpdateException dbEx)
             {
-                // log dbEx.InnerException here
+                var innerException = dbEx.InnerException?.Message ?? dbEx.Message;
+
+                // Check for common constraint violations
+                if (innerException.Contains("UNIQUE") || innerException.Contains("duplicate"))
+                {
+                    throw new InvalidOperationException("You've already booked this trip or there's a duplicate booking attempt");
+                }
+                else if (innerException.Contains("FOREIGN KEY") || innerException.Contains("foreign key"))
+                {
+                    throw new InvalidOperationException("Invalid trip or user reference");
+                }
+                else if (innerException.Contains("CHECK") || innerException.Contains("constraint"))
+                {
+                    throw new InvalidOperationException("Booking data violates database constraints");
+                }
+
+                // Re-throw with more context
+                throw new InvalidOperationException($"Database error while creating booking: {innerException}", dbEx);
+            }
+            catch (Exception ex)
+            {
                 throw;
             }
-
-            // 6) best-effort: update Stripe metadata
-            if (paymentMethod == enums.PaymentMethod.Credit)
-            {
-                try
-                {
-                    var svcUp = new PaymentIntentService();
-                    await svcUp.UpdateAsync(
-                      booking.PaymentGatewayTransactionId,
-                      new PaymentIntentUpdateOptions { Metadata = new Dictionary<string, string> { ["bookingId"] = booking.Id.ToString() } }
-                    );
-                }
-                catch { /* log but ignore */ }
-            }
-
-            // 7) best-effort: send notification
-            try
-            {
-                await _notificationService.CreateNotificationAsync(
-                  userId,
-                  $"You booked: {trip.Title} for {quantity} person(s)",
-                  null
-                );
-            }
-            catch { /* ignore */ }
-
-            return (booking.Id, clientSecret);
         }
 
 

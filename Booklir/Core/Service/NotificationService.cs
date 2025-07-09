@@ -24,13 +24,14 @@ namespace Booklir.Core.Service
                 .ToListAsync();
         }
 
-        public async Task CreateNotificationAsync(string userId, string message, string url = null)
+        public async Task CreateNotificationAsync(string userId, string message, string type = "General", string url = null)
         {
             var notification = new Notification
             {
                 UserId = userId,
                 Message = message,
                 RelatedUrl = url,
+                Type = type,
                 CreatedAt = DateTime.Now
             };
 

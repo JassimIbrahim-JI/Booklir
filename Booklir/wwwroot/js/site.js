@@ -1,6 +1,4 @@
-﻿/* site.js */
-
-// Navbar Scroll Effect
+﻿// Navbar Scroll Effect
 $(window).on('scroll', function () {
     const $navbar = $('.navbar');
     const scrollClass = 'scrolled';
@@ -15,24 +13,23 @@ $(window).on('scroll', function () {
     }
 });
 
-
-// hide initial page‐loader when everything (images, scripts) is loaded
+// Hide initial page-loader when everything is loaded
 $(window).on('load', function () {
     $('#page-loader').addClass('hidden');
 });
 
-
-// OPTIONAL: show loader for any AJAX requests
+// Show loader for AJAX requests
 $(document)
-  .ajaxStart(function() {
-    $('#page-loader').removeClass('hidden');
-  })
-  .ajaxStop(function() {
-    $('#page-loader').addClass('hidden');
-  });
+    .ajaxStart(function () {
+        $('#page-loader').removeClass('hidden');
+    })
+    .ajaxStop(function () {
+        $('#page-loader').addClass('hidden');
+    });
 
-// Notification dropdown: mark as read on click
+// Notification system
 document.addEventListener('DOMContentLoaded', function () {
+    // Mark as read on click
     document.querySelectorAll('.dropdown-item[data-notification-id]').forEach(item => {
         item.addEventListener('click', function () {
             const notificationId = this.dataset.notificationId;
@@ -48,8 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Update notification badge every 60 seconds
     setInterval(updateNotificationBadge, 60000);
 
-
-    //Scroll reveal 
+    // Scroll reveal animations
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -62,11 +58,11 @@ document.addEventListener('DOMContentLoaded', function () {
         observer.observe(el);
     });
 
+    // Scroll to top button
     const scrollBtn = document.getElementById('scrollToTop');
-
     if (scrollBtn) {
         window.addEventListener('scroll', () => {
-            if (window.pageYOffset > 300) {
+            if (window.scrollY > 300) {
                 scrollBtn.classList.add('show');
             } else {
                 scrollBtn.classList.remove('show');
@@ -80,10 +76,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
-
 });
 
-// scroll script
+// Progress scroll bar
 window.addEventListener('scroll', () => {
     const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
     const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -91,6 +86,7 @@ window.addEventListener('scroll', () => {
     document.getElementById('scrollBar').style.width = scrolled + '%';
 });
 
+// Notification badge updater
 async function updateNotificationBadge() {
     try {
         const response = await fetch('/Notification/GetUnreadCount');
@@ -119,9 +115,7 @@ $(document).on('click', '.js-confirm-cancel', function () {
         success: function (res) {
             if (res.success) {
                 toastr.success(res.message);
-                // hide the modal
                 $modal.modal('hide');
-                // remove the card or row
                 $(`[data-id="${bookingId}"]`).closest('.booking-card, tr').fadeOut(300);
             } else {
                 toastr.error(res.message);
@@ -148,23 +142,50 @@ $(document).on('click', '.navbar-nav .nav-link', function () {
     $('.navbar-collapse').collapse('hide');
 });
 
-// AJAX Form Handling (generic)
+// Stripe Initialization
+let stripe, cardElement;
+if (document.getElementById('card-element') && window.stripePublishableKey) {
+    stripe = Stripe(window.stripePublishableKey);
+    const elements = stripe.elements();
+  //  cardElement = elements.create('card');
+
+
+    // ← Add hidePostalCode:true here
+    cardElement = elements.create('card', {
+        hidePostalCode: true
+    });
+
+
+    cardElement.mount('#card-element');
+
+    // Handle card errors
+    cardElement.on('change', function (event) {
+        const displayError = document.getElementById('card-errors');
+        displayError.textContent = event.error ? event.error.message : '';
+    });
+}
+
+// Toggle payment sections
+function togglePaymentSections() {
+    const pm = $('input[name="PaymentMethod"]:checked').val();
+    $('#stripe-card-section').toggle(pm === 'Credit');
+}
+
+// Initialize payment toggle
+$(function () {
+    togglePaymentSections();
+    $('input[name="PaymentMethod"]').on('change', togglePaymentSections);
+});
+// Generic AJAX Form Handling
 $(document).on('submit', '.ajax-form', function (e) {
     e.preventDefault();
     const form = $(this);
     const button = form.find('button[type="submit"]');
     const origTxt = button.text().trim();
 
-    // save it so we can restore later
-    button.data('original-text', origTxt);
-
-    button.prop('disabled', true)
-        .html(
-            '<span class="spinner-border spinner-border-sm" ' +
-            'role="status" ' +
-            'style="color: var(--primary-color)"></span> ' + 
-            origTxt
-        );
+    button.data('original-text', origTxt)
+        .prop('disabled', true)
+        .html(`<span class="spinner-border spinner-border-sm" role="status" style="color: var(--primary-color)"></span> ${origTxt}`);
 
     $.ajax({
         url: form.attr('action'),
@@ -190,14 +211,10 @@ $(document).on('submit', '.booking-form', function (e) {
     e.preventDefault();
     const form = $(this);
     const button = form.find('button[type="submit"]');
+    const origText = button.data('original-text');
 
     button.prop('disabled', true)
-        .html(
-            '<span class="spinner-border spinner-border-sm" ' +
-            'role="status" ' +
-            'style="color: var(--primary-color)"></span> ' +
-            'Processing...'
-        );
+        .html('<span class="spinner-border spinner-border-sm" role="status"></span> Processing...');
 
     $.ajax({
         url: form.attr('action'),
@@ -205,36 +222,66 @@ $(document).on('submit', '.booking-form', function (e) {
         data: form.serialize(),
         success: function (response) {
             if (!response.success) {
-                (response.errors || [response.message]).forEach(msg => toastr.error(msg));
-                return button.prop('disabled', false).html(button.data('original-text'));
+                (response.errors || [response.message]).forEach(m => toastr.error(m));
+                return reset();
             }
+
             if (!response.isPaymentRequired) {
                 toastr.success('Booking created! Redirecting...');
-                return setTimeout(() => window.location.href = response.redirectUrl, 1000);
+                return setTimeout(() => window.location = response.redirectUrl, 800);
             }
-            toastr.info('Completing payment...');
-            stripe.confirmCardPayment(response.clientSecret, { payment_method: { card: cardElement } })
+
+            // CREDIT path
+            toastr.info('Completing payment…', { timeOut: 0 });
+
+            stripe.confirmCardPayment(response.clientSecret, {
+                payment_method: { card: cardElement }
+            })
                 .then(result => {
+                    toastr.clear();  // clear the “Completing payment” splash
+
                     if (result.error) {
-                        toastr.error(result.error.message);
-                        return $.post('/api/Payment/MarkFailed', { bookingId: response.bookingId });
+                        // mark failed and show only the error toast
+                        return $.post('/api/Payment/MarkFailed', { bookingId: response.bookingId })
+                            .always(() => {
+                                toastr.error(result.error.message);
+                                reset();
+                            });
                     }
-                    toastr.success('Payment succeeded! Booking confirmed.');
+
+                    // mark paid and show only the success toast
                     return $.post('/api/Payment/MarkPaid', {
                         bookingId: response.bookingId,
                         transactionId: result.paymentIntent.id
-                    }).done(() => setTimeout(() => window.location.href = `/Booking/Confirmation/${response.bookingId}`, 800));
+                    })
+                        .done(() => {
+                            toastr.success('Payment succeeded! Redirecting…');
+                            setTimeout(() => window.location = `/Booking/Confirmation/${response.bookingId}`, 800);
+                        })
+                        .always(reset);
                 })
                 .catch(err => {
+                    // network/Stripe‑SDK error
+                    toastr.clear();
                     toastr.error('Payment processing error');
                     console.error(err);
+                    reset();
                 });
+
         },
-        error: () => toastr.error('An error occurred while processing your request.'),
-        complete: () => button.prop('disabled', false).html(button.data('original-text'))
+        error: function () {
+            toastr.error('An error occurred while processing your request.');
+            reset();
+        }
     });
+
+    function reset() {
+        button.prop('disabled', false).html(origText);
+    }
 });
 
+
+// Cancel Booking with SweetAlert
 $(document).on('click', '.cancel-booking', function () {
     const $btn = $(this);
     const bookingId = $btn.data('id');
@@ -259,7 +306,6 @@ $(document).on('click', '.cancel-booking', function () {
             },
             success: function (res) {
                 if (res.success) {
-                    // remove the row
                     $btn.closest('tr').fadeOut(300, function () { $(this).remove(); });
                     Swal.fire('Cancelled!', res.message, 'success');
                 } else {
@@ -287,7 +333,7 @@ $('.thumbnail').on('click', function () {
     });
 });
 
-// Price Range Filter (if you have a slider)
+// Price Range Filter
 $('#priceRange').on('input', function () {
     const max = parseFloat($(this).val());
     $('.trip-card').each(function () {
@@ -296,7 +342,7 @@ $('#priceRange').on('input', function () {
     });
 });
 
-// Utility: debounce
+// Debounce utility
 function debounce(fn, delay) {
     let timer;
     return function () {
@@ -307,7 +353,7 @@ function debounce(fn, delay) {
     };
 }
 
-// Live Search on Home & Featured Trips Section (debounced, spinner, no-results, error UI)
+// Live Search Functionality
 function performHomeSearch() {
     const form = $('#homeSearchForm');
     const url = form.attr('action');
@@ -333,9 +379,10 @@ function performHomeSearch() {
     });
 }
 
+// Search event listeners
 $(document).on('input change', '#searchTripInput, #startDateInput, #durationSelect', debounce(performHomeSearch, 300));
 
-// AJAX Pagination for Search Results Container
+// AJAX Pagination
 $(document).on('click', '#homeSearchResults .pagination a', function (e) {
     e.preventDefault();
     const page = $(this).data('page');

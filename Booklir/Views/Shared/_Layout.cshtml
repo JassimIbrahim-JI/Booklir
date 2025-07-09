@@ -1,5 +1,6 @@
 ﻿@using Booklir.Core.Interfaces
 @inject IDestinationService DestinationService
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
 
@@ -115,7 +116,7 @@
                                 <button class="btn btn-primary d-flex align-items-center user-menu" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                     @if (!string.IsNullOrEmpty(userImage))
                                     {
-                                        <img src="@userImage" alt="Avatar" class="rounded-circle me-2" width="32" height="32" />
+                                        <img src="@userImage" alt="Avatar" class="rounded-circle me-2" width="24" height="24" />
                                     }
                                     else
                                     {
@@ -128,7 +129,7 @@
                                     <div class="p-3 text-center border-bottom">
                                         @if (!string.IsNullOrEmpty(userImage))
                                         {
-                                            <img src="@userImage" alt="Avatar" class="rounded-circle mb-2" width="64" height="64" />
+                                            <img src="@userImage" alt="Avatar" class="rounded-circle mb-2" width="32" height="32" />
                                         }
                                         else
                                         {
@@ -272,6 +273,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- 3) Stripe.js (only if you’re using credit‐card flow) -->
     <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        window.stripePublishableKey = '@Configuration["Stripe:PublishableKey"]';
+    </script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

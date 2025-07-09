@@ -80,32 +80,3 @@
     </div>
 
 </div>
-
-@section Scripts{
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-       
-            // Notification loading 
-            
-            $('[data-load-notification]').on('shown.bs.dropdown', function () {
-
-                const $container = $('.notification-list');
-               
-                // Clear previous content
-                $container.html('<div class="text-center py-2"><div class="spinner-border text-primary" role="status"></div></div>')
-
-                // Load notifications
-                $container.load('/Admin/GetNotifications', function () {
-                    $('.notification-item[data-unread="True"]').each(function () {
-                        const notificationId = $(this).data('id');
-                        $.post('/Admin/MarkNotificationAsRead', { notificationId });
-                    });
-                });
-
-            });
-
-        });
-
-
-    </script>
-}

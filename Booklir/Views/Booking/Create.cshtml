@@ -284,7 +284,7 @@ else
                                             </div>
                                         </div>
 
-                                    <button type="submit" data-original-text="Confirm & Pay Now" class="btn btn-primary btn-lg w-100 py-3">
+                                        <button type="submit" data-original-text="Confirm & Pay Now" class="btn btn-primary btn-lg w-100 py-3">
                                         <i class="bi bi-lock-fill me-2"></i> Confirm & Pay Now
                                     </button>
                                 </form>
@@ -305,29 +305,16 @@ else
 
         function togglePaymentSections() {
             var pm = $('input[name="PaymentMethod"]:checked').val();
-            if (pm === 'CreditCard') {
-                $('#stripe‐card‐section').show();
+            if (pm === 'Credit') {
+                $('#stripe-card-section').show();
             } else {
-                $('#stripe‐card‐section').hide();
+                $('#stripe-card-section').hide();
             }
         }
 
         $(document).ready(function () {
             togglePaymentSections();
             $('input[name="PaymentMethod"]').on('change', togglePaymentSections);
-        });
-
-        const stripe = Stripe("@Configuration["Stripe:PublishableKey"]");
-        const elements = stripe.elements();
-        const cardElement = elements.create('card');
-        cardElement.mount('#card-element');
-        cardElement.on('change', function (event) {
-            var displayError = document.getElementById('card-errors');
-            if (event.error) {
-                displayError.textContent = event.error.message;
-            } else {
-                displayError.textContent = '';
-            }
         });
 
 

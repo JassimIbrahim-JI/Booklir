@@ -156,7 +156,7 @@ function setupEventHandlers() {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: `@Url.Action("DeleteUser", "Admin")/${userId}`,
+                    url: `/Admin/DeleteUser/${userId}`,
                     method: 'POST',
                     headers: {
                         'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
@@ -572,3 +572,46 @@ document.querySelector('[data-bs-theme-toggle]').addEventListener('click', funct
 
 
 // or document.addEventListener('DOMContentLoaded', initializeTheme)
+
+$(function () {
+    // listen on the dropdown container
+    $('.notifications-dropdown').on('shown.bs.dropdown', function () {
+        const $dropdown = $(this);
+        const $btn = $dropdown.find('[data-load-notification]');
+        const $container = $dropdown.find('.notification-list');
+        const $badge = $btn.find('.notification-badge');
+
+        // show spinner
+        $container.html(`
+      <div class="text-center py-2">
+        <div class="spinner-border text-primary" role="status"></div>
+      </div>
+    `);
+
+        // load the notifications partial
+        $container.load('/Admin/GetNotifications', function () {
+            // find unread items
+            const $unreadItems = $container.find('.notification-item.unread');
+            let count = parseInt($badge.text()) || 0;
+
+            $unreadItems.each(function () {
+                const id = $(this).data('id');
+                // mark read server‑side
+                $.post('/Admin/MarkNotificationAsRead', { notificationId: id });
+
+                // visually mark read
+                $(this).removeClass('unread').attr('data-unread', 'False');
+
+                // decrement badge
+                if (count > 0) count--;
+            });
+
+            // update or remove badge
+            if (count > 0) {
+                $badge.text(count);
+            } else {
+                $badge.remove();
+            }
+        });
+    });
+});

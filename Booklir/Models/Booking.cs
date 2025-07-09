@@ -24,6 +24,7 @@ namespace Booklir.Models
         public int Quantity { get; set; }
 
         [Required]
+        [Range(0.01, 999999.99, ErrorMessage = "Total price must be greater than 0")]
         public decimal TotalPrice { get; set; }
 
         [Required]
@@ -45,7 +46,7 @@ namespace Booklir.Models
         public virtual Trip Trip { get; set; }
 
         // Soft Delete
-        public bool IsDeleted { get; set; }
+        public bool IsDeleted { get; set; } 
         // Timestamp when delete it
         public DateTime? DeletedAt { get; set; }
         // who deleted it
