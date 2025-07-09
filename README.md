@@ -8,6 +8,16 @@
 
 ---
 
+## 🎥 Demo Video
+
+Watch a quick walkthrough of the main features:
+
+▶️ [Click here to watch the demo video](https://drive.google.com/file/d/1t1MOwYCFyjE4LmKFqSXvUaSDmnfiOqZn/view?usp=sharing)
+
+> Tip: Hover over the gallery, click itinerary days to see details, and try the Stripe checkout form.
+
+---
+
 ## 📖 Table of Contents
 
 1. [About](#about)  
@@ -74,16 +84,6 @@ Booklir is a full‑stack web application that lets travelers browse and book tr
 - **JSON:** Newtonsoft.Json  
 - **PDF Reports:** PdfSharpCore  
 - **CLI tools:** EF Core Tools, CsvHelper  
-
----
-
-## 🎥 Demo Video
-
-Watch a quick walkthrough of the main features:
-
-▶️ [Click here to watch the demo video](https://drive.google.com/file/d/1t1MOwYCFyjE4LmKFqSXvUaSDmnfiOqZn/view?usp=sharing)
-
-> Tip: Hover over the gallery, click itinerary days to see details, and try the Stripe checkout form.
 
 ---
 
