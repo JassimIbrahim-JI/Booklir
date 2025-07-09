@@ -81,10 +81,7 @@ Booklir is a full‑stack web application that lets travelers browse and book tr
 
 Watch a quick walkthrough of the main features:
 
-<video width="640" controls>
-  <source src="https://onedrive.live.com/download?cid=<YOUR-CID>&resid=<RESID>&authkey=<AUTHKEY>" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+▶️ [Click here to watch the demo video](https://drive.google.com/file/d/1t1MOwYCFyjE4LmKFqSXvUaSDmnfiOqZn/view?usp=sharing)
 
 > Tip: Hover over the gallery, click itinerary days to see details, and try the Stripe checkout form.
 
